@@ -1,5 +1,5 @@
 {
-  "name": "rag-embedding-service",
+  "name": "@rag-system/embedding",
   "version": "1.0.0",
   "description": "TypeScript Embedding + Rerank Service for RAG System",
   "main": "dist/index.js",

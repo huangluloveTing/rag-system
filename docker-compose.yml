@@ -4,7 +4,7 @@ services:
   # Node.js 后端 API
   api:
     build:
-      context: ./backend
+      context: ./apps/backend
       dockerfile: Dockerfile.dev
     environment:
       NODE_ENV: development
@@ -45,7 +45,7 @@ services:
   # React 前端
   web:
     build:
-      context: ./frontend
+      context: ./apps/frontend
       dockerfile: Dockerfile.dev
     environment:
       NODE_ENV: development

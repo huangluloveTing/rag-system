@@ -1,9 +1,10 @@
 {
-  "name": "rag-system-backend",
+  "name": "@rag-system/backend",
   "version": "1.0.0",
   "description": "RAG System Backend - Node.js + NestJS + TypeScript",
   "author": "Software Dev Team",
   "license": "MIT",
+  "main": "dist/main.js",
   "scripts": {
     "build": "nest build",
     "start": "nest start",

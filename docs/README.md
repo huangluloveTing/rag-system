@@ -52,6 +52,7 @@
 
 - [开发状态报告](../DEV_STATUS.md)
 - [项目 README](../README.md)
+- [Monorepo 架构](./MONOREPO.md)
 
 ---
 

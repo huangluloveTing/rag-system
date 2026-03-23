@@ -2,6 +2,36 @@
 
 基于 Node.js + TypeScript 的企业级 RAG（检索增强生成）系统。
 
+**🏗️ Monorepo 架构**: 使用 pnpm workspace 统一管理后端、前端和微服务。
+
+---
+
+## 🚀 快速开始
+
+### 前置要求
+
+- Node.js 20+
+- pnpm 8+
+- Docker Desktop
+
+### 一键启动
+
+```bash
+# 1. 安装依赖（根目录）
+pnpm install
+
+# 2. 启动基础设施
+pnpm docker:infra
+
+# 3. 启动所有应用服务（并行）
+pnpm dev
+```
+
+访问：
+- 前端：http://localhost:5173
+- 后端 API: http://localhost:3000
+- API 文档：http://localhost:3000/api/docs
+
 ## 🚀 技术栈
 
 ### 后端
@@ -31,62 +61,48 @@
 - pnpm (推荐使用)
 - 外部服务：PostgreSQL, Milvus, Redis, MinIO (可通过 Docker 启动)
 
-### 方式一：完整一键启动（推荐）
+### 方式一：使用 Monorepo 命令（推荐）
 
 ```bash
-# 1. 克隆项目后进入目录
+# 1. 进入项目目录
 cd rag-system
 
-# 2. 复制环境变量文件
+# 2. 安装所有依赖（根目录）
+pnpm install
+
+# 3. 复制环境变量文件
 cp .env.example .env
 
-# 3. 编辑 .env 文件，配置外部服务和 LLM API Key
+# 4. 启动基础设施
+pnpm docker:infra
 
-# 4. 启动基础设施（PostgreSQL + Milvus + Redis + MinIO）
-docker-compose -f docker-compose.infra.yml up -d
+# 5. 启动所有应用服务（并行）
+pnpm dev
 
-# 5. 启动 Embedding 服务
-cd services/embedding
-pnpm install
-pnpm run dev &
+# 6. 运行数据库迁移
+pnpm db:migrate
+pnpm db:seed
 
-# 6. 启动前后端应用
-cd ../..
-docker-compose up -d
-
-# 7. 运行数据库迁移
-docker-compose exec api pnpm prisma migrate deploy
-docker-compose exec api pnpm prisma db seed
-
-# 8. 访问应用
+# 7. 访问应用
 # 前端：http://localhost:5173
 # 后端 API: http://localhost:3000
 # API 文档：http://localhost:3000/api/docs
 ```
 
-### 方式二：本地开发模式
+### 方式二：分别启动
 
 ```bash
 # 1. 启动基础设施
-docker-compose -f docker-compose.infra.yml up -d
+pnpm docker:infra
 
-# 2. 启动 Embedding 服务
-cd services/embedding
-pnpm install
-pnpm run dev
+# 2. 新终端启动后端
+pnpm dev:backend
 
-# 3. 新终端启动后端
-cd backend
-pnpm install
-pnpm prisma generate
-pnpm prisma migrate dev
-pnpm prisma db seed
-pnpm run dev
+# 3. 新终端启动前端
+pnpm dev:frontend
 
-# 4. 新终端启动前端
-cd frontend
-pnpm install
-pnpm run dev
+# 4. 新终端启动 Embedding
+pnpm dev:embedding
 ```
 
 ---
@@ -95,32 +111,28 @@ pnpm run dev
 
 ```
 rag-system/
-├── backend/                 # NestJS 后端
-│   ├── prisma/             # 数据库 Schema + 迁移
-│   ├── src/
-│   │   ├── modules/        # 功能模块
-│   │   ├── common/         # 公共组件
-│   │   └── main.ts         # 入口
-│   └── package.json
-├── frontend/               # React 前端
-│   ├── src/
-│   │   ├── components/     # 组件
-│   │   ├── pages/          # 页面
-│   │   └── App.tsx         # 入口
-│   └── package.json
-├── services/
-│   └── embedding/          # TypeScript Embedding 服务
-│       ├── src/
-│       ├── package.json
-│       └── Dockerfile
-├── docs/
-│   ├── README.md           # 文档索引
-│   ├── DEPLOYMENT.md       # 部署指南
-│   └── 001-*.md            # 项目文档
-├── docker-compose.yml      # 前后端部署
-├── docker-compose.infra.yml # 基础设施部署
-├── .env.example            # 环境变量模板
-└── README.md               # 本文件
+├── package.json              # 根配置 (workspace)
+├── pnpm-workspace.yaml       # workspace 定义
+├── .npmrc                    # pnpm 配置
+│
+├── apps/                     # 应用服务
+│   ├── backend/             # NestJS 后端 API
+│   │   ├── prisma/         # 数据库 Schema
+│   │   ├── src/            # 源代码
+│   │   └── package.json
+│   ├── frontend/            # React 前端
+│   │   ├── src/            # 源代码
+│   │   └── package.json
+│   └── embedding/           # Embedding 微服务
+│       ├── src/            # 源代码
+│       └── package.json
+│
+├── docs/                     # 项目文档
+├── scripts/                  # 脚本工具
+├── docker-compose.yml        # 前后端部署
+├── docker-compose.infra.yml  # 基础设施部署
+├── .env.example              # 环境变量模板
+└── README.md                 # 本文件
 ```
 
 ---

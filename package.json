@@ -1,0 +1,40 @@
+{
+  "name": "rag-system-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "RAG System Monorepo - Intelligent Knowledge Base Q&A System",
+  "scripts": {
+    "dev": "pnpm -r --parallel run dev",
+    "dev:backend": "pnpm --filter @rag-system/backend run dev",
+    "dev:frontend": "pnpm --filter @rag-system/frontend run dev",
+    "dev:embedding": "pnpm --filter @rag-system/embedding run dev",
+    "build": "pnpm -r run build",
+    "test": "pnpm -r run test",
+    "lint": "pnpm -r run lint",
+    "clean": "pnpm -r run clean && rm -rf node_modules",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:infra": "docker-compose -f docker-compose.infra.yml up -d",
+    "db:migrate": "pnpm --filter @rag-system/backend prisma migrate dev",
+    "db:seed": "pnpm --filter @rag-system/backend prisma db seed",
+    "db:studio": "pnpm --filter @rag-system/backend prisma studio"
+  },
+  "keywords": [
+    "rag",
+    "ai",
+    "knowledge-base",
+    "qdrant",
+    "nestjs",
+    "react"
+  ],
+  "author": "Software Dev Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "packageManager": "pnpm@10.32.1"
+}
