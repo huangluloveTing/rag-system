@@ -5,6 +5,7 @@
   "author": "Software Dev Team",
   "license": "MIT",
   "main": "dist/main.js",
+  "type": "module",
   "scripts": {
     "build": "nest build",
     "start": "nest start",
@@ -36,6 +37,7 @@
     "@nestjs/swagger": "^7.3.0",
     "@nestjs/throttler": "^5.1.1",
     "@nestjs/websockets": "^10.3.0",
+    "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.5.0",
     "@qdrant/js-client-rest": "^1.12.0",
     "axios": "^1.6.7",

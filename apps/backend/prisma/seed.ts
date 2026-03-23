@@ -2,11 +2,17 @@
  * 数据库种子数据脚本
  * 创建初始管理员账号和默认知识库
  */
-
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from './generated/client'
+import { PrismaPg } from '@prisma/adapter-pg'
 import * as bcrypt from 'bcrypt';
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL
+})
+
+const prisma = new PrismaClient({
+  adapter
+});
 
 async function main() {
   console.log('🌱 Starting database seeding...');
@@ -57,10 +63,8 @@ async function main() {
   console.log('✅ Viewer user created:', viewer.username);
 
   // 创建默认知识库
-  const defaultKB = await prisma.knowledgeBase.upsert({
-    where: { name: '默认知识库' },
-    update: {},
-    create: {
+  const defaultKB = await prisma.knowledgeBase.create({
+    data: {
       name: '默认知识库',
       description: '系统默认知识库',
       config: {
@@ -76,10 +80,8 @@ async function main() {
   console.log('✅ Default knowledge base created:', defaultKB.name);
 
   // 创建测试知识库
-  const testKB = await prisma.knowledgeBase.upsert({
-    where: { name: '测试知识库' },
-    update: {},
-    create: {
+  const testKB = await prisma.knowledgeBase.create({
+    data: {
       name: '测试知识库',
       description: '用于测试的知识库',
       config: {

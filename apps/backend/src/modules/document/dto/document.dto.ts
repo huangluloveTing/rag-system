@@ -1,5 +1,5 @@
 /**
- * 文档上传响应 DTO
+ * 文档 DTO
  */
 
 import { ApiProperty } from '@nestjs/swagger';
@@ -49,7 +49,7 @@ export class DocumentListResponseDto {
   pageSize: number;
 }
 
-export class DocumentDto {
+export class DocumentDetailDto {
   @ApiProperty({ description: '文档 ID', example: 'uuid-xxx' })
   id: string;
 
@@ -79,9 +79,7 @@ export class DocumentDto {
 
   @ApiProperty({ description: '更新时间', example: '2026-03-23T12:00:00Z' })
   updatedAt: Date;
-}
 
-export class DocumentDetailDto extends DocumentDto {
   @ApiProperty({ description: '知识库 ID', example: 'kb-xxx' })
   knowledgeBaseId: string;
 
