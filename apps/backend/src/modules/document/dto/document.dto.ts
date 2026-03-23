@@ -25,14 +25,14 @@ export class DocumentDto {
   @ApiProperty({ description: '文件大小（字节）', example: 1048576 })
   fileSize: number;
 
-  @ApiProperty({ description: '文件类型', example: 'pdf', enum: ['pdf', 'docx', 'markdown', 'txt'] })
-  fileType: string;
+  @ApiProperty({ description: '文件类型', example: 'pdf', enum: ['pdf', 'docx', 'markdown', 'txt'], required: false })
+  fileType?: string | null;
 
   @ApiProperty({ description: '状态', example: 'indexed', enum: ['pending', 'processing', 'indexed', 'failed'] })
   status: string;
 
   @ApiProperty({ description: '错误信息', example: null, required: false })
-  errorMessage?: string;
+  errorMessage?: string | null;
 }
 
 export class DocumentListResponseDto {
@@ -59,14 +59,14 @@ export class DocumentDetailDto {
   @ApiProperty({ description: '文件大小（字节）', example: 1048576 })
   fileSize: number;
 
-  @ApiProperty({ description: '文件类型', example: 'pdf', enum: ['pdf', 'docx', 'markdown', 'txt'] })
-  fileType: string;
+  @ApiProperty({ description: '文件类型', example: 'pdf', enum: ['pdf', 'docx', 'markdown', 'txt'], required: false })
+  fileType?: string | null;
 
   @ApiProperty({ description: '状态', example: 'indexed', enum: ['pending', 'processing', 'indexed', 'failed'] })
   status: string;
 
   @ApiProperty({ description: '错误信息', example: null, required: false })
-  errorMessage?: string;
+  errorMessage?: string | null;
 
   @ApiProperty({ description: '标签', example: ['制度', '人事'], required: false })
   tags?: string[];
@@ -84,14 +84,29 @@ export class DocumentDetailDto {
   knowledgeBaseId: string;
 
   @ApiProperty({ description: '创建者 ID', example: 'user-xxx', required: false })
-  createdBy?: string;
+  createdBy?: string | null;
 
   @ApiProperty({ description: '文件路径', example: 'documents/uuid-xxx.pdf', required: false })
-  filePath?: string;
+  filePath?: string | null;
 
   @ApiProperty({ description: '内容哈希', example: 'sha256-xxx', required: false })
-  contentHash?: string;
+  contentHash?: string | null;
 
   @ApiProperty({ description: '元数据', required: false })
   metadata?: any;
+
+  @ApiProperty({ description: '创建者信息', required: false })
+  creator?: {
+    id: string;
+    username: string;
+    email: string;
+  } | null;
+
+  @ApiProperty({ description: '文档片段', required: false })
+  chunks?: Array<{
+    id: string;
+    content: string;
+    page: number | null;
+    chunkIndex: number;
+  }>;
 }

@@ -7,7 +7,7 @@ import { Injectable, Logger, NotFoundException, BadRequestException } from '@nes
 import { PrismaService } from '../../prisma/prisma.service';
 import { MinioService } from '../../common/minio/minio.service';
 import { BullQueueService } from '../../common/queue/bull-queue.service';
-import { DocumentDetailDto, DocumentListResponseDto } from './dto/document.dto';
+import { DocumentDetailDto, DocumentListResponseDto, DocumentDto } from './dto/document.dto';
 import * as crypto from 'crypto';
 
 interface UploadOptions {
@@ -147,8 +147,16 @@ export class DocumentService {
 
     return {
       documents: documents.map((doc) => ({
-        ...doc,
+        id: doc.id,
+        filename: doc.filename,
         fileSize: Number(doc.fileSize),
+        fileType: doc.fileType ?? null,
+        status: doc.status,
+        errorMessage: doc.errorMessage ?? null,
+        tags: doc.tags,
+        isPublic: doc.isPublic,
+        createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt,
       })),
       total,
       page,
@@ -187,8 +195,34 @@ export class DocumentService {
     }
 
     return {
-      ...document,
+      id: document.id,
+      filename: document.filename,
       fileSize: Number(document.fileSize),
+      fileType: document.fileType ?? null,
+      status: document.status,
+      errorMessage: document.errorMessage ?? null,
+      tags: document.tags,
+      isPublic: document.isPublic,
+      createdAt: document.createdAt,
+      updatedAt: document.updatedAt,
+      knowledgeBaseId: document.knowledgeBaseId,
+      createdBy: document.createdBy,
+      filePath: document.filePath ?? undefined,
+      contentHash: document.contentHash ?? undefined,
+      metadata: document.metadata ?? undefined,
+      creator: document.creator
+        ? {
+            id: document.creator.id,
+            username: document.creator.username,
+            email: document.creator.email,
+          }
+        : null,
+      chunks: document.chunks.map((chunk) => ({
+        id: chunk.id,
+        content: chunk.content,
+        page: chunk.page,
+        chunkIndex: chunk.chunkIndex,
+      })),
     };
   }
 
