@@ -1,0 +1,169 @@
+// Prisma Schema for RAG System
+// 参考技术文档 4.1 节
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 用户表
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  username     String   @unique @db.VarChar(50)
+  email        String   @unique @db.VarChar(100)
+  passwordHash String   @db.VarChar(255)
+  role         String   @default("viewer") @db.VarChar(20) // admin/editor/viewer
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  documents          Document[]       @relation("DocumentCreator")
+  knowledgeBases     KnowledgeBase[]
+  chatSessions       ChatSession[]
+  feedbacks          Feedback[]
+  retrievalLogs      RetrievalLog[]
+  
+  @@index([username])
+  @@index([email])
+  @@map("users")
+}
+
+// 知识库表
+model KnowledgeBase {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @db.VarChar(100)
+  description String?
+  config      Json?    // {chunkSize: 500, overlap: 100, embeddingModel: ...}
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  createdBy   String   @db.Uuid
+  creator     User     @relation(fields: [createdBy], references: [id])
+  
+  documents   Document[]
+  chatSessions ChatSession[]
+  
+  @@index([name])
+  @@map("knowledge_bases")
+}
+
+// 文档表
+model Document {
+  id          String   @id @default(uuid()) @db.Uuid
+  filename    String   @db.VarChar(255)
+  filePath    String?  @db.VarChar(500) // 对象存储路径
+  fileSize    BigInt?
+  fileType    String?  @db.VarChar(20) // pdf/docx/markdown/txt
+  contentHash String?  @db.VarChar(64) // 用于去重
+  status      String   @default("pending") @db.VarChar(20) // pending/processing/indexed/failed
+  errorMessage String?
+  metadata    Json?    // {pages: 10, author: ..., uploadTime: ...}
+  tags        String[]
+  isPublic    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  knowledgeBaseId String @db.Uuid
+  knowledgeBase   KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id])
+  
+  createdBy    String? @db.Uuid
+  creator      User?   @relation("DocumentCreator", fields: [createdBy], references: [id])
+  
+  chunks       Chunk[]
+  
+  @@index([knowledgeBaseId])
+  @@index([status])
+  @@map("documents")
+}
+
+// 文档片段表 (Milvus 存储向量，PostgreSQL 存储元数据)
+model Chunk {
+  id        String   @id @default(uuid()) @db.Uuid
+  chunkId   String   @unique @db.VarChar(64) // Milvus 中的主键
+  docId     String   @db.Uuid
+  document  Document @relation(fields: [docId], references: [id], onDelete: Cascade)
+  content   String   @db.VarChar(8000)
+  page      Int?
+  chunkIndex Int
+  metadata  Json?
+  
+  @@index([docId])
+  @@map("chunks")
+}
+
+// 对话会话表
+model ChatSession {
+  id        String   @id @default(uuid()) @db.Uuid
+  title     String?  @db.VarChar(200)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  userId        String @db.Uuid
+  user          User   @relation(fields: [userId], references: [id])
+  
+  knowledgeBaseId String? @db.Uuid
+  knowledgeBase   KnowledgeBase? @relation(fields: [knowledgeBaseId], references: [id])
+  
+  messages    ChatMessage[]
+  
+  @@index([userId])
+  @@map("chat_sessions")
+}
+
+// 对话消息表
+model ChatMessage {
+  id         String   @id @default(uuid()) @db.Uuid
+  role       String   @db.VarChar(20) // user/assistant
+  content    String
+  references Json?    // 引用的文档片段
+  latencyMs  Int?
+  tokensUsed Int?
+  createdAt  DateTime @default(now())
+  
+  sessionId  String @db.Uuid
+  session    ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  feedbacks  Feedback[]
+  
+  @@index([sessionId])
+  @@index([createdAt])
+  @@map("chat_messages")
+}
+
+// 反馈表
+model Feedback {
+  id        String   @id @default(uuid()) @db.Uuid
+  rating    Int      // 1 or -1
+  comment   String?
+  createdAt DateTime @default(now())
+  
+  chatMessageId String @db.Uuid
+  chatMessage   ChatMessage @relation(fields: [chatMessageId], references: [id])
+  
+  userId     String @db.Uuid
+  user       User   @relation(fields: [userId], references: [id])
+  
+  @@index([chatMessageId])
+  @@index([rating])
+  @@map("feedbacks")
+}
+
+// 检索日志表
+model RetrievalLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  question  String
+  retrievedDocs Json? // 检索到的文档 ID 列表
+  latencyMs Int?
+  createdAt DateTime @default(now())
+  
+  userId String? @db.Uuid
+  user   User?   @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([createdAt])
+  @@map("retrieval_logs")
+}

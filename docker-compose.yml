@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # Node.js 后端 API
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      # 数据库配置（通过环境变量）
+      DATABASE_URL: ${DATABASE_URL:-postgresql://rag:rag123@localhost:5432/rag}
+      # Milvus 配置
+      MILVUS_HOST: ${MILVUS_HOST:-localhost}
+      MILVUS_PORT: ${MILVUS_PORT:-19530}
+      # Redis 配置
+      REDIS_URL: ${REDIS_URL:-redis://localhost:6379}
+      # MinIO 配置
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-localhost:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_BUCKET: ${MINIO_BUCKET:-rag-documents}
+      # Embedding 服务配置
+      EMBEDDING_SERVICE_URL: ${EMBEDDING_SERVICE_URL:-http://localhost:8001}
+      # LLM 配置
+      LLM_API_KEY: ${LLM_API_KEY:-your-api-key}
+      LLM_MODEL: ${LLM_MODEL:-qwen3.5-plus}
+      # JWT 配置
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-prod}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      # 应用配置
+      PORT: ${PORT:-3000}
+      API_PREFIX: ${API_PREFIX:-/api/v1}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+    depends_on: []
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    ports:
+      - "${PORT:-3000}:3000"
+    command: sh -c "pnpm install && pnpm prisma generate && pnpm run dev"
+    networks:
+      - rag-network
+
+  # React 前端
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
+    depends_on:
+      - api
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "${VITE_PORT:-5173}:5173"
+    command: sh -c "pnpm install && pnpm run dev"
+    networks:
+      - rag-network
+
+networks:
+  rag-network:
+    driver: bridge
