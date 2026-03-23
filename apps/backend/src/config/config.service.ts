@@ -57,11 +57,16 @@ export class AppConfigService {
   }
 
   get minio(): MinIOConfig {
+    const rawUseSSL = this.configService.get<string>('MINIO_USE_SSL');
+    const useSSL = rawUseSSL === undefined
+      ? false
+      : rawUseSSL === 'true' || rawUseSSL === '1';
+
     return {
       endPoint: this.configService.get<string>('MINIO_ENDPOINT', 'localhost:9000'),
       accessKey: this.configService.get<string>('MINIO_ACCESS_KEY', 'minioadmin'),
       secretKey: this.configService.get<string>('MINIO_SECRET_KEY', 'minioadmin'),
-      useSSL: this.configService.get<boolean>('MINIO_USE_SSL', false),
+      useSSL,
     };
   }
 

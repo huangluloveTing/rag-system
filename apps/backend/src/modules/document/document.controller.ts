@@ -15,6 +15,7 @@ import {
   UploadedFile,
   UseGuards,
   ParseIntPipe,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBearerAuth } from '@nestjs/swagger';
@@ -49,17 +50,17 @@ export class DocumentController {
     @Body('is_public') isPublic?: string,
   ): Promise<UploadResponseDto> {
     if (!file) {
-      throw new Error('请上传文件');
+      throw new BadRequestException('请上传文件');
     }
 
     if (!knowledgeBaseId) {
-      throw new Error('请指定知识库 ID');
+      throw new BadRequestException('请指定知识库 ID');
     }
 
     // 验证文件大小
     const maxFileSize = this.configService.get<number>('MAX_FILE_SIZE', 52428800);
     if (file.size > maxFileSize) {
-      throw new Error(`文件大小超过限制 (${maxFileSize / 1024 / 1024}MB)`);
+      throw new BadRequestException(`文件大小超过限制 (${maxFileSize / 1024 / 1024}MB)`);
     }
 
     // 解析标签和公开设置

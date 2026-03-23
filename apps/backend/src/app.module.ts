@@ -21,7 +21,7 @@ import { ConfigModule as AppConfigModule } from './config/config.module';
     // 配置模块
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: ['../../.env', '.env'],
     }),
 
     // 限流模块（防止 API 滥用）

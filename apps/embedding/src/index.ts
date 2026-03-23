@@ -5,7 +5,6 @@
 
 import express, { Request, Response } from 'express';
 import cors from 'cors';
-import { env, pipeline } from '@xenova/transformers';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -18,9 +17,17 @@ const HOST = process.env.HOST || '0.0.0.0';
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// 禁用 Transformers.js 的远程模型下载（使用本地模型）
-env.allowLocalModels = true;
-env.useBrowserCache = false;
+// transformers 延迟加载（避免启动时引入可选原生依赖，例如 sharp）
+let transformers: typeof import('@xenova/transformers') | null = null;
+async function getTransformers() {
+  if (!transformers) {
+    transformers = await import('@xenova/transformers');
+    // 禁用 Transformers.js 的远程模型下载（使用本地模型）
+    transformers.env.allowLocalModels = true;
+    transformers.env.useBrowserCache = false;
+  }
+  return transformers;
+}
 
 // 模型缓存
 let embeddingPipeline: any = null;
@@ -32,7 +39,7 @@ let rerankPipeline: any = null;
 async function loadEmbeddingModel() {
   if (!embeddingPipeline) {
     console.log('🔄 Loading embedding model: bge-large-zh-v1.5...');
-    embeddingPipeline = await pipeline(
+    embeddingPipeline = await (await getTransformers()).pipeline(
       'feature-extraction',
       'Xenova/bge-large-zh-v1.5',
       { quantized: false }
@@ -48,7 +55,7 @@ async function loadEmbeddingModel() {
 async function loadRerankModel() {
   if (!rerankPipeline) {
     console.log('🔄 Loading rerank model: bge-reranker-large...');
-    rerankPipeline = await pipeline(
+    rerankPipeline = await (await getTransformers()).pipeline(
       'text-classification',
       'Xenova/bge-reranker-large',
       { quantized: false }

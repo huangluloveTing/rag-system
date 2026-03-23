@@ -5,7 +5,7 @@
 
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import Bull from 'bull';
+import * as Bull from 'bull';
 
 export interface DocumentProcessingJob {
   documentId: string;
