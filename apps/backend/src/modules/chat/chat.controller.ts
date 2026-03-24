@@ -41,7 +41,7 @@ export class ChatController {
     @Body() request: ChatRequest,
     @CurrentUser() user: any
   ): Promise<ChatResponse> {
-    return this.chatService.chat(request, user.userId);
+    return this.chatService.chat(request, user.id);
   }
 
   @Post('stream')
@@ -51,7 +51,7 @@ export class ChatController {
     @Body() request: ChatRequest,
     @CurrentUser() user: any
   ): Promise<Observable<{ data: string }>> {
-    const generator = this.chatService.chatStream(request, user.userId);
+    const generator = this.chatService.chatStream(request, user.id);
 
     return from(generator).pipe(
       map((chunk) => ({
@@ -68,7 +68,7 @@ export class ChatController {
     @Query('pageSize') pageSize: string = '20'
   ) {
     return this.chatService.getUserSessions(
-      user.userId,
+      user.id,
       parseInt(page, 10),
       parseInt(pageSize, 10)
     );
@@ -86,7 +86,7 @@ export class ChatController {
     @Param('sessionId') sessionId: string,
     @CurrentUser() user: any
   ) {
-    await this.chatService.deleteSession(sessionId, user.userId);
+    await this.chatService.deleteSession(sessionId, user.id);
     return { message: '会话已删除' };
   }
 }
