@@ -1,0 +1,13 @@
+/**
+ * Embedding 模块
+ */
+
+import { Module, Global } from '@nestjs/common';
+import { EmbeddingService } from './embedding.service';
+
+@Global()
+@Module({
+  providers: [EmbeddingService],
+  exports: [EmbeddingService],
+})
+export class EmbeddingModule {}

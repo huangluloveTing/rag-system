@@ -117,6 +117,35 @@ export class MinioService {
   }
 
   /**
+   * 下载文件为 Buffer
+   * @param bucketName - bucket 名称
+   * @param objectName - 对象名称
+   * @returns 文件 Buffer
+   */
+  async downloadFile(bucketName: string, objectName: string): Promise<Buffer> {
+    try {
+      const stream = await this.client.getObject(bucketName, objectName);
+      const chunks: Buffer[] = [];
+
+      return new Promise((resolve, reject) => {
+        stream.on('data', (chunk: Buffer) => {
+          chunks.push(chunk);
+        });
+        stream.on('end', () => {
+          resolve(Buffer.concat(chunks));
+        });
+        stream.on('error', (error) => {
+          this.logger.error(`Error downloading file: ${error.message}`);
+          reject(error);
+        });
+      });
+    } catch (error) {
+      this.logger.error(`Error downloading file: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
    * 获取文件预签名 URL（用于临时访问）
    * @param bucketName - bucket 名称
    * @param objectName - 对象名称

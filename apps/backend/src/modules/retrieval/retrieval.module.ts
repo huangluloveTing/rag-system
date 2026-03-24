@@ -1,14 +1,16 @@
 /**
- * 检索模块（占位）
- * Phase 2 实现
+ * 检索模块
  */
 
 import { Module } from '@nestjs/common';
 import { RetrievalService } from './retrieval.service';
-import { QdrantService } from './qdrant.service';
+import { QdrantModule } from '../../common/qdrant/qdrant.module';
+import { EmbeddingModule } from '../../common/embedding/embedding.module';
+import { PrismaModule } from '../../prisma/prisma.module';
 
 @Module({
-  providers: [RetrievalService, QdrantService],
-  exports: [RetrievalService, QdrantService],
+  imports: [PrismaModule, QdrantModule, EmbeddingModule],
+  providers: [RetrievalService],
+  exports: [RetrievalService],
 })
 export class RetrievalModule {}

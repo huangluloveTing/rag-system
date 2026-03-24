@@ -14,15 +14,18 @@ import { ChatModule } from './modules/chat/chat.module';
 import { RetrievalModule } from './modules/retrieval/retrieval.module';
 import { LlmModule } from './modules/llm/llm.module';
 import { FeedbackModule } from './modules/feedback/feedback.module';
+import { KnowledgeBaseModule } from './modules/knowledge-base/knowledge-base.module';
 import { ConfigModule as AppConfigModule } from './config/config.module';
 import { LoggerMiddleware } from './middlewares/logge';
+import { QdrantModule } from './common/qdrant/qdrant.module';
+import { EmbeddingModule } from './common/embedding/embedding.module';
 
 @Module({
   imports: [
     // 配置模块
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['../../.env', '.env.local', '.env'],
+      envFilePath: ['.env.local', '.env'],
     }),
 
     // 限流模块（防止 API 滥用）
@@ -39,10 +42,15 @@ import { LoggerMiddleware } from './middlewares/logge';
     // Prisma 数据库模块
     PrismaModule,
 
+    // 通用服务模块
+    QdrantModule,
+    EmbeddingModule,
+
     // 功能模块
     AuthModule,
     UserModule,
     DocumentModule,
+    KnowledgeBaseModule,
     ChatModule,
     RetrievalModule,
     LlmModule,

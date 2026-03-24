@@ -9,7 +9,7 @@ services:
     environment:
       NODE_ENV: development
       # 数据库配置（通过环境变量）
-      DATABASE_URL: ${DATABASE_URL:-postgresql://rag:rag123@localhost:5432/rag}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://edu:edu@localhost:5432/edu_llm}
       # Qdrant 配置
       QDRANT_HOST: ${QDRANT_HOST:-localhost}
       QDRANT_PORT: ${QDRANT_PORT:-6333}

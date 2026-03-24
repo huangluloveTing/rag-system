@@ -1,13 +1,14 @@
 /**
- * 反馈模块（占位）
- * Phase 3 实现
+ * 反馈模块
  */
 
 import { Module } from '@nestjs/common';
-import { FeedbackController } from './feedback.controller';
 import { FeedbackService } from './feedback.service';
+import { FeedbackController } from './feedback.controller';
+import { PrismaModule } from '../../prisma/prisma.module';
 
 @Module({
+  imports: [PrismaModule],
   controllers: [FeedbackController],
   providers: [FeedbackService],
   exports: [FeedbackService],
