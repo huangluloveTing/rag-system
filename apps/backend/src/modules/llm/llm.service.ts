@@ -1,11 +1,12 @@
 /**
  * LLM 服务
- * 集成通义千问 API，处理文本生成
+ * 使用 Vercel AI SDK 集成通义千问 API（兼容 OpenAI）
  */
 
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
+import { createOpenAI } from '@ai-sdk/openai';
+import { generateText, streamText } from 'ai';
 
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -22,28 +23,30 @@ export interface LLMResponse {
   model: string;
 }
 
-export interface StreamChunk {
-  delta: string;
-  finish_reason: string | null;
-}
-
 @Injectable()
 export class LlmService {
   private readonly logger = new Logger(LlmService.name);
-  private readonly apiKey: string;
   private readonly model: string;
-  private readonly baseUrl: string;
+  private readonly openai: ReturnType<typeof createOpenAI>;
 
   constructor(private configService: ConfigService) {
-    this.apiKey = this.configService.get<string>(
+    const apiKey = this.configService.get<string>(
       'LLM_API_KEY',
       'sk-your-api-key-here'
     );
-    this.model = this.configService.get<string>('LLM_MODEL', 'qwen3.5-plus');
-    this.baseUrl = this.configService.get<string>(
+    this.model = this.configService.get<string>('LLM_MODEL', 'qwen/qwen3.5-plus');
+    const baseUrl = this.configService.get<string>(
       'LLM_BASE_URL',
       'https://dashscope.aliyuncs.com/compatible-mode/v1'
     );
+
+    // 创建兼容 OpenAI 的 provider
+    this.openai = createOpenAI({
+      apiKey,
+      baseURL: baseUrl,
+    });
+
+    this.logger.log(`LLM Service initialized with model: ${this.model}`);
   }
 
   /**
@@ -57,129 +60,68 @@ export class LlmService {
       topP?: number;
     } = {}
   ): Promise<LLMResponse> {
-    const { temperature = 0.7, maxTokens = 2000, topP = 0.9 } = options;
+    const { temperature = 0.7, topP = 0.9 } = options;
 
     try {
       this.logger.debug(`Generating response with model: ${this.model}`);
 
-      const response = await axios.post(
-        `${this.baseUrl}/chat/completions`,
-        {
-          model: this.model,
-          messages,
-          temperature,
-          max_tokens: maxTokens,
-          top_p: topP,
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${this.apiKey}`,
-          },
-          timeout: 60000, // 60秒超时
-        }
-      );
+      const result = await generateText({
+        model: this.openai(this.model),
+        messages,
+        temperature,
+        maxRetries: 3,
+      });
 
-      const choice = response.data.choices[0];
-      const usage = response.data.usage;
+      // 获取 token 使用情况
+      const usage = result.usage as any;
+      const promptTokens = usage?.promptTokens || usage?.prompt_tokens || 0;
+      const completionTokens = usage?.completionTokens || usage?.completion_tokens || 0;
+      const totalTokens = promptTokens + completionTokens;
 
       this.logger.debug(
-        `Generated ${usage.completion_tokens} tokens, total: ${usage.total_tokens}`
+        `Generated ${completionTokens} tokens, total: ${totalTokens}`
       );
 
       return {
-        content: choice.message.content,
+        content: result.text,
         usage: {
-          prompt_tokens: usage.prompt_tokens,
-          completion_tokens: usage.completion_tokens,
-          total_tokens: usage.total_tokens,
+          prompt_tokens: promptTokens,
+          completion_tokens: completionTokens,
+          total_tokens: totalTokens,
         },
         model: this.model,
       };
     } catch (error) {
       this.logger.error(`LLM generation failed: ${error.message}`);
-      if (error.response) {
-        this.logger.error(
-          `API Error: ${JSON.stringify(error.response.data)}`
-        );
-      }
       throw new Error(`LLM generation failed: ${error.message}`);
     }
   }
 
   /**
    * 流式生成文本
-   * 返回 AsyncGenerator
+   * 返回 AsyncIterableStream
    */
-  async *generateStream(
+  async generateStream(
     messages: ChatMessage[],
     options: {
       temperature?: number;
       maxTokens?: number;
       topP?: number;
     } = {}
-  ): AsyncGenerator<StreamChunk> {
-    const { temperature = 0.7, maxTokens = 2000, topP = 0.9 } = options;
+  ) {
+    const { temperature = 0.7, topP = 0.9 } = options;
 
     try {
       this.logger.debug(`Starting stream generation with model: ${this.model}`);
 
-      const response = await axios.post(
-        `${this.baseUrl}/chat/completions`,
-        {
-          model: this.model,
-          messages,
-          temperature,
-          max_tokens: maxTokens,
-          top_p: topP,
-          stream: true,
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${this.apiKey}`,
-          },
-          responseType: 'stream',
-          timeout: 120000, // 2分钟超时
-        }
-      );
+      const result = streamText({
+        model: this.openai(this.model),
+        messages,
+        temperature,
+        maxRetries: 3,
+      });
 
-      // 处理流式响应
-      const stream = response.data;
-      let buffer = '';
-
-      for await (const chunk of stream) {
-        buffer += chunk.toString();
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || ''; // 保留最后一个不完整的行
-
-        for (const line of lines) {
-          const trimmedLine = line.trim();
-          if (!trimmedLine || trimmedLine === 'data: [DONE]') continue;
-          if (!trimmedLine.startsWith('data: ')) continue;
-
-          try {
-            const jsonStr = trimmedLine.slice(6); // 移除 'data: '
-            const data = JSON.parse(jsonStr);
-
-            const delta = data.choices[0]?.delta?.content || '';
-            const finishReason = data.choices[0]?.finish_reason || null;
-
-            if (delta) {
-              yield {
-                delta,
-                finish_reason: finishReason,
-              };
-            }
-          } catch (parseError) {
-            this.logger.warn(
-              `Failed to parse stream chunk: ${parseError.message}`
-            );
-          }
-        }
-      }
-
-      this.logger.debug('Stream generation completed');
+      return result.textStream;
     } catch (error) {
       this.logger.error(`Stream generation failed: ${error.message}`);
       throw new Error(`Stream generation failed: ${error.message}`);

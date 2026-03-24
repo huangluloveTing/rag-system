@@ -34,8 +34,7 @@ export class ChatService {
   constructor(
     private prisma: PrismaService,
     private retrievalService: RetrievalService,
-    private llmService: LlmService,
-    private configService: ConfigService
+    private llmService: LlmService
   ) {}
 
   /**
@@ -98,7 +97,7 @@ export class ChatService {
       });
 
       // 8. 保存助手消息
-      const assistantMessage = await this.prisma.chatMessage.create({
+      await this.prisma.chatMessage.create({
         data: {
           sessionId: session.id,
           role: 'assistant',
@@ -146,7 +145,7 @@ export class ChatService {
 
   /**
    * 流式聊天
-   * 返回 AsyncGenerator
+   * 返回 AsyncIterable<string>
    */
   async *chatStream(
     request: ChatRequest,
@@ -202,10 +201,12 @@ export class ChatService {
       });
 
       // 7. 流式生成答案
+      const stream = await this.llmService.generateStream(messages);
       let fullContent = '';
-      for await (const chunk of this.llmService.generateStream(messages)) {
-        fullContent += chunk.delta;
-        yield chunk.delta;
+
+      for await (const chunk of stream) {
+        fullContent += chunk;
+        yield chunk;
       }
 
       // 8. 保存助手消息
