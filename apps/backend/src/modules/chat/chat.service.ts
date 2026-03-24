@@ -27,6 +27,42 @@ export interface ChatResponse {
   };
 }
 
+// OpenAI Chat Completion API 响应类型
+export interface OpenAIChatCompletionResponse {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: Array<{
+    index: number;
+    message: {
+      role: string;
+      content: string;
+    };
+    finish_reason: string;
+  }>;
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
+
+export interface OpenAIChatCompletionChunk {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: Array<{
+    index: number;
+    delta: {
+      role?: string;
+      content?: string;
+    };
+    finish_reason: string | null;
+  }>;
+}
+
 @Injectable()
 export class ChatService {
   private readonly logger = new Logger(ChatService.name);
@@ -66,22 +102,23 @@ export class ChatService {
       }
 
       // 2. 检索相关文档
-      const retrievalResults = await this.retrievalService.retrieve(question, {
-        knowledgeBaseId: session.knowledgeBaseId || undefined,
-      });
+      // const retrievalResults = await this.retrievalService.retrieve(question, {
+      //   knowledgeBaseId: session.knowledgeBaseId || undefined,
+      // });
 
-      this.logger.debug(`Retrieved ${retrievalResults.length} documents`);
+      // this.logger.debug(`Retrieved ${retrievalResults.length} documents`);
 
-      // 3. 构建上下文
-      const contexts = retrievalResults.map((r) => r.content);
+      // // 3. 构建上下文
+      // const contexts = retrievalResults.map((r) => r.content);
 
       // 4. 获取历史消息
       const history = await this.getChatHistory(session.id);
 
       // 5. 构建 Prompt
       const messages: ChatMessage[] = [
-        ...history.slice(-6), // 保留最近 3 轮对话
-        ...this.llmService.buildRAGPrompt(question, contexts),
+        ...history || [],
+        { role: 'user', content: question }
+        // ...this.llmService.buildRAGPrompt(question, contexts),
       ];
 
       // 6. 调用 LLM 生成答案
@@ -102,12 +139,13 @@ export class ChatService {
           sessionId: session.id,
           role: 'assistant',
           content: llmResponse.content,
-          references: retrievalResults.map((r) => ({
-            chunkId: r.chunkId,
-            documentId: r.documentId,
-            content: r.content.substring(0, 200), // 只保存前 200 字符
-            score: r.score,
-          })),
+          // references: retrievalResults.map((r) => ({
+          //   chunkId: r.chunkId,
+          //   documentId: r.documentId,
+          //   content: r.content.substring(0, 200), // 只保存前 200 字符
+          //   score: r.score,
+          // })),
+          references: [],
           latencyMs: Date.now() - startTime,
           tokensUsed: llmResponse.usage.total_tokens,
         },
@@ -121,11 +159,12 @@ export class ChatService {
       await this.prisma.retrievalLog.create({
         data: {
           question,
-          retrievedDocs: retrievalResults.map((r) => ({
-            chunkId: r.chunkId,
-            documentId: r.documentId,
-            score: r.score,
-          })),
+          // retrievedDocs: retrievalResults.map((r) => ({
+          //   chunkId: r.chunkId,
+          //   documentId: r.documentId,
+          //   score: r.score,
+          // })),
+          retrievedDocs: [],
           latencyMs: Date.now() - startTime,
           userId,
         },
@@ -134,7 +173,8 @@ export class ChatService {
       return {
         answer: llmResponse.content,
         sessionId: session.id,
-        references: retrievalResults,
+        // references: retrievalResults,
+        references: [],
         usage: llmResponse.usage,
       };
     } catch (error) {
@@ -318,5 +358,143 @@ export class ChatService {
     });
 
     this.logger.log(`Deleted session: ${sessionId}`);
+  }
+
+  /**
+   * OpenAI 兼容的 Chat Completion API（非流式）
+   */
+  async openAIChatCompletion(
+    messages: ChatMessage[],
+    options: {
+      temperature?: number;
+      maxTokens?: number;
+    } = {},
+    userId: string
+  ): Promise<OpenAIChatCompletionResponse> {
+    const { temperature, maxTokens } = options;
+    const startTime = Date.now();
+
+    try {
+      this.logger.debug(`Processing OpenAI chat completion request`);
+
+      // 调用 LLM 生成答案
+      const llmResponse = await this.llmService.generate(messages, {
+        temperature,
+        maxTokens,
+      });
+
+      const completionId = `chatcmpl-${Date.now()}`;
+      const created = Math.floor(Date.now() / 1000);
+
+      this.logger.debug(
+        `OpenAI chat completion finished in ${Date.now() - startTime}ms`
+      );
+
+      return {
+        id: completionId,
+        object: 'chat.completion',
+        created,
+        model: llmResponse.model,
+        choices: [
+          {
+            index: 0,
+            message: {
+              role: 'assistant',
+              content: llmResponse.content,
+            },
+            finish_reason: 'stop',
+          },
+        ],
+        usage: llmResponse.usage,
+      };
+    } catch (error) {
+      this.logger.error(`OpenAI chat completion failed: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * OpenAI 兼容的流式 Chat Completion API
+   */
+  async *openAIChatCompletionStream(
+    messages: ChatMessage[],
+    options: {
+      temperature?: number;
+      maxTokens?: number;
+    } = {},
+    userId: string
+  ): AsyncGenerator<OpenAIChatCompletionChunk> {
+    const { temperature, maxTokens } = options;
+
+    try {
+      this.logger.debug(`Processing OpenAI streaming chat completion`);
+
+      const completionId = `chatcmpl-${Date.now()}`;
+      const created = Math.floor(Date.now() / 1000);
+      const model = this.llmService['model']; // 获取模型名称
+
+      // 发送初始 chunk（role）
+      yield {
+        id: completionId,
+        object: 'chat.completion.chunk',
+        created,
+        model,
+        choices: [
+          {
+            index: 0,
+            delta: {
+              role: 'assistant',
+            },
+            finish_reason: null,
+          },
+        ],
+      };
+
+      // 流式生成内容
+      const stream = await this.llmService.generateStream(messages, {
+        temperature,
+        maxTokens,
+      });
+
+      for await (const contentChunk of stream) {
+        yield {
+          id: completionId,
+          object: 'chat.completion.chunk',
+          created,
+          model,
+          choices: [
+            {
+              index: 0,
+              delta: {
+                content: contentChunk,
+              },
+              finish_reason: null,
+            },
+          ],
+        };
+      }
+
+      // 发送结束 chunk
+      yield {
+        id: completionId,
+        object: 'chat.completion.chunk',
+        created,
+        model,
+        choices: [
+          {
+            index: 0,
+            delta: {},
+            finish_reason: 'stop',
+          },
+        ],
+      };
+
+      this.logger.debug(`OpenAI streaming chat completion finished`);
+    } catch (error) {
+      this.logger.error(
+        `OpenAI streaming chat completion failed: ${error.message}`
+      );
+      throw error;
+    }
   }
 }

@@ -1,6 +1,6 @@
 /**
  * 聊天控制器
- * 处理聊天相关的 HTTP 请求
+ * 提供标准聊天接口和 OpenAI 兼容的 Chat Completions API
  */
 
 import {
@@ -12,7 +12,6 @@ import {
   Param,
   Query,
   UseGuards,
-  Req,
   Sse,
 } from '@nestjs/common';
 import {
@@ -27,6 +26,20 @@ import { ChatService, ChatRequest, ChatResponse } from './chat.service';
 import { Observable, from } from 'rxjs';
 import { map } from 'rxjs/operators';
 
+// OpenAI Chat Completion API 类型
+export interface OpenAIChatMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+export interface OpenAIChatCompletionRequest {
+  model: string;
+  messages: OpenAIChatMessage[];
+  temperature?: number;
+  max_tokens?: number;
+  stream?: boolean;
+}
+
 @ApiTags('chat')
 @ApiBearerAuth()
 @Controller('chat')
@@ -34,6 +47,9 @@ import { map } from 'rxjs/operators';
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
+  /**
+   * 标准 RAG 聊天接口
+   */
   @Post()
   @ApiOperation({ summary: '发送消息（非流式）' })
   @ApiResponse({ status: 201, description: '返回答案' })
@@ -44,6 +60,9 @@ export class ChatController {
     return this.chatService.chat(request, user.id);
   }
 
+  /**
+   * 标准 RAG 流式聊天接口
+   */
   @Post('stream')
   @Sse()
   @ApiOperation({ summary: '发送消息（SSE 流式）' })
@@ -56,6 +75,65 @@ export class ChatController {
     return from(generator).pipe(
       map((chunk) => ({
         data: chunk,
+      }))
+    );
+  }
+
+  /**
+   * OpenAI 兼容的 Chat Completions API
+   * POST /api/v1/chat/completions
+   */
+  @Post('completions')
+  @ApiOperation({ summary: 'OpenAI 兼容的 Chat Completions API' })
+  async chatCompletions(
+    @Body() request: OpenAIChatCompletionRequest,
+    @CurrentUser() user: any
+  ) {
+    const { messages, temperature, max_tokens, stream = false } = request;
+
+    if (stream) {
+      // 流式响应将在下面处理
+      throw new Error('For streaming, use POST /chat/completions/stream');
+    }
+
+    // 非流式响应
+    const result = await this.chatService.openAIChatCompletion(
+      messages,
+      {
+        temperature,
+        maxTokens: max_tokens,
+      },
+      user.id
+    );
+
+    return result;
+  }
+
+  /**
+   * OpenAI 兼容的流式 Chat Completions API
+   * POST /api/v1/chat/completions/stream
+   */
+  @Post('completions/stream')
+  @Sse()
+  @ApiOperation({ summary: 'OpenAI 兼容的流式 Chat Completions API' })
+  async chatCompletionsStream(
+    @Body() request: OpenAIChatCompletionRequest,
+    @CurrentUser() user: any
+  ): Promise<Observable<{ data: string }>> {
+    const { messages, temperature, max_tokens } = request;
+
+    const generator = this.chatService.openAIChatCompletionStream(
+      messages,
+      {
+        temperature,
+        maxTokens: max_tokens,
+      },
+      user.id
+    );
+
+    return from(generator).pipe(
+      map((chunk) => ({
+        data: JSON.stringify(chunk),
       }))
     );
   }
