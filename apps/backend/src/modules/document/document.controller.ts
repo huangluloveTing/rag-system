@@ -33,7 +33,9 @@ export class DocumentController {
   constructor(
     private documentService: DocumentService,
     private configService: ConfigService,
-  ) {}
+  ) {
+    
+  }
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))

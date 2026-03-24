@@ -3,7 +3,7 @@
  * 导入所有功能模块
  */
 
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { PrismaModule } from './prisma/prisma.module';
@@ -15,13 +15,14 @@ import { RetrievalModule } from './modules/retrieval/retrieval.module';
 import { LlmModule } from './modules/llm/llm.module';
 import { FeedbackModule } from './modules/feedback/feedback.module';
 import { ConfigModule as AppConfigModule } from './config/config.module';
+import { LoggerMiddleware } from './middlewares/logge';
 
 @Module({
   imports: [
     // 配置模块
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['../../.env', '.env'],
+      envFilePath: ['../../.env', '.env.local', '.env'],
     }),
 
     // 限流模块（防止 API 滥用）
@@ -48,4 +49,8 @@ import { ConfigModule as AppConfigModule } from './config/config.module';
     FeedbackModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggerMiddleware).forRoutes('*');
+  }
+}

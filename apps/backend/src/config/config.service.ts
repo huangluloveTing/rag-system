@@ -10,11 +10,11 @@ export interface DatabaseConfig {
   url: string;
 }
 
-export interface MilvusConfig {
+export interface QdrantConfig {
   host: string;
   port: number;
-  username?: string;
-  password?: string;
+  grpcPort: number;
+  apiKey?: string;
 }
 
 export interface MinIOConfig {
@@ -47,12 +47,12 @@ export class AppConfigService {
     };
   }
 
-  get milvus(): MilvusConfig {
+  get qdrant(): QdrantConfig {
     return {
-      host: this.configService.get<string>('MILVUS_HOST', 'localhost'),
-      port: this.configService.get<number>('MILVUS_PORT', 19530),
-      username: this.configService.get<string>('MILVUS_USERNAME'),
-      password: this.configService.get<string>('MILVUS_PASSWORD'),
+      host: this.configService.get<string>('QDRANT_HOST', 'localhost'),
+      port: this.configService.get<number>('QDRANT_PORT', 6333),
+      grpcPort: this.configService.get<number>('QDRANT_GRPC_PORT', 6334),
+      apiKey: this.configService.get<string>('QDRANT_API_KEY'),
     };
   }
 

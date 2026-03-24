@@ -2,7 +2,7 @@
  * RAG System Backend - NestJS 应用入口
  * 
  * 技术栈：NestJS 10 + TypeScript + Prisma + Bull Queue
- * 数据库：PostgreSQL 15 + Milvus 2.4
+ * 数据库：PostgreSQL 15 + Qdrant
  */
 
 import { NestFactory } from '@nestjs/core';

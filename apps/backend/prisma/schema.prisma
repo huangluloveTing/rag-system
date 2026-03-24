@@ -80,10 +80,10 @@ model Document {
   @@map("documents")
 }
 
-// 文档片段表 (Milvus 存储向量，PostgreSQL 存储元数据)
+// 文档片段表 (Qdrant 存储向量，PostgreSQL 存储元数据)
 model Chunk {
   id        String   @id @default(uuid()) @db.Uuid
-  chunkId   String   @unique @db.VarChar(64) // Milvus 中的主键
+  chunkId   String   @unique @db.VarChar(64) // Qdrant 中的主键
   docId     String   @db.Uuid
   document  Document @relation(fields: [docId], references: [id], onDelete: Cascade)
   content   String   @db.VarChar(8000)

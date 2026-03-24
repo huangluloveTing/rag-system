@@ -1,6 +1,6 @@
 version: '3.8'
 
-# 基础设施服务（PostgreSQL + Milvus + Redis + MinIO）
+# 基础设施服务（PostgreSQL + Qdrant + Redis + MinIO）
 # 使用方式：docker-compose -f docker-compose.infra.yml up -d
 
 services:

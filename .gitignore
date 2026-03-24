@@ -38,3 +38,5 @@ coverage
 
 # Turbo
 .turbo
+
+**/*/*.local

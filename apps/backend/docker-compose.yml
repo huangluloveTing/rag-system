@@ -50,42 +50,20 @@ services:
       timeout: 20s
       retries: 3
 
-  # Milvus 向量数据库
-  milvus-standalone:
-    image: milvusdb/milvus:v2.4.0
-    container_name: rag-milvus
-    environment:
-      ETCD_ENDPOINTS: etcd:2379
-      MINIO_ADDRESS: minio:9000
-    depends_on:
-      - etcd
-      - minio
+  # Qdrant 向量数据库
+  qdrant:
+    image: qdrant/qdrant:v1.13.4
+    container_name: rag-qdrant
     ports:
-      - "19530:19530"
-      - "9091:9091"
+      - "6333:6333"
+      - "6334:6334"
     volumes:
-      - milvus:/var/lib/milvus
+      - qdrant:/qdrant/storage
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Etcd (Milvus 依赖)
-  etcd:
-    image: quay.io/coreos/etcd:v3.5.5
-    container_name: rag-etcd
-    environment:
-      - ETCD_AUTO_COMPACTION_MODE=revision
-      - ETCD_AUTO_COMPACTION_RETENTION=1000
-    volumes:
-      - etcd:/etcd
-    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
-    healthcheck:
-      test: ["CMD", "etcdctl", "endpoint", "health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: ["CMD", "curl", "-f", "http://localhost:6333/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Node.js 后端 API
   api:
@@ -96,8 +74,9 @@ services:
     environment:
       NODE_ENV: development
       DATABASE_URL: postgresql://rag:rag123@postgres:5432/rag
-      MILVUS_HOST: milvus-standalone
-      MILVUS_PORT: 19530
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: 6333
+      QDRANT_GRPC_PORT: 6334
       REDIS_URL: redis://redis:6379
       MINIO_ENDPOINT: minio:9000
       MINIO_ACCESS_KEY: minioadmin
@@ -113,7 +92,7 @@ services:
         condition: service_healthy
       minio:
         condition: service_started
-      milvus-standalone:
+      qdrant:
         condition: service_started
     volumes:
       - .:/app
@@ -125,5 +104,4 @@ services:
 volumes:
   pgdata:
   minio:
-  milvus:
-  etcd:
+  qdrant:

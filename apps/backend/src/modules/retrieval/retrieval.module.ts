@@ -5,10 +5,10 @@
 
 import { Module } from '@nestjs/common';
 import { RetrievalService } from './retrieval.service';
-import { MilvusService } from './milvus.service';
+import { QdrantService } from './qdrant.service';
 
 @Module({
-  providers: [RetrievalService, MilvusService],
-  exports: [RetrievalService, MilvusService],
+  providers: [RetrievalService, QdrantService],
+  exports: [RetrievalService, QdrantService],
 })
 export class RetrievalModule {}
