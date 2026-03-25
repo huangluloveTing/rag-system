@@ -54,6 +54,7 @@ export const ModelName = {
   User: 'User',
   KnowledgeBase: 'KnowledgeBase',
   Document: 'Document',
+  DocumentVersion: 'DocumentVersion',
   Chunk: 'Chunk',
   ChatSession: 'ChatSession',
   ChatMessage: 'ChatMessage',
@@ -116,6 +117,8 @@ export const DocumentScalarFieldEnum = {
   metadata: 'metadata',
   tags: 'tags',
   isPublic: 'isPublic',
+  version: 'version',
+  isLatest: 'isLatest',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   knowledgeBaseId: 'knowledgeBaseId',
@@ -123,6 +126,25 @@ export const DocumentScalarFieldEnum = {
 } as const
 
 export type DocumentScalarFieldEnum = (typeof DocumentScalarFieldEnum)[keyof typeof DocumentScalarFieldEnum]
+
+
+export const DocumentVersionScalarFieldEnum = {
+  id: 'id',
+  documentId: 'documentId',
+  version: 'version',
+  filename: 'filename',
+  filePath: 'filePath',
+  fileSize: 'fileSize',
+  fileType: 'fileType',
+  contentHash: 'contentHash',
+  status: 'status',
+  errorMessage: 'errorMessage',
+  metadata: 'metadata',
+  tags: 'tags',
+  createdAt: 'createdAt'
+} as const
+
+export type DocumentVersionScalarFieldEnum = (typeof DocumentVersionScalarFieldEnum)[keyof typeof DocumentVersionScalarFieldEnum]
 
 
 export const ChunkScalarFieldEnum = {

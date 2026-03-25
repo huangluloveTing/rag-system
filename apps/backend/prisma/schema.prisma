@@ -57,27 +57,54 @@ model Document {
   filename    String   @db.VarChar(255)
   filePath    String?  @db.VarChar(500) // 对象存储路径
   fileSize    BigInt?
-  fileType    String?  @db.VarChar(20) // pdf/docx/markdown/txt
+  fileType    String?  @db.VarChar(20) // pdf/docx/markdown/txt/html
   contentHash String?  @db.VarChar(64) // 用于去重
   status      String   @default("pending") @db.VarChar(20) // pending/processing/indexed/failed
   errorMessage String?
   metadata    Json?    // {pages: 10, author: ..., uploadTime: ...}
   tags        String[]
   isPublic    Boolean  @default(true)
+  version     Int      @default(1) // 版本号，从 1 开始
+  isLatest    Boolean  @default(true) // 是否是最新版本
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   knowledgeBaseId String @db.Uuid
   knowledgeBase   KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id])
-  
+
   createdBy    String? @db.Uuid
   creator      User?   @relation("DocumentCreator", fields: [createdBy], references: [id])
-  
+
   chunks       Chunk[]
-  
+  versions     DocumentVersion[] // 历史版本
+
   @@index([knowledgeBaseId])
   @@index([status])
+  @@index([contentHash])
   @@map("documents")
+}
+
+// 文档版本表（历史版本）
+model DocumentVersion {
+  id          String   @id @default(uuid()) @db.Uuid
+  documentId  String   @db.Uuid // 关联的主文档 ID
+  version     Int      // 版本号
+  filename    String   @db.VarChar(255)
+  filePath    String   @db.VarChar(500) // 对象存储路径
+  fileSize    BigInt
+  fileType    String?  @db.VarChar(20)
+  contentHash String   @db.VarChar(64)
+  status      String   @db.VarChar(20) // indexed/failed
+  errorMessage String?
+  metadata    Json?
+  tags        String[]
+  createdAt   DateTime @default(now())
+
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@index([version])
+  @@map("document_versions")
 }
 
 // 文档片段表 (Qdrant 存储向量，PostgreSQL 存储元数据)

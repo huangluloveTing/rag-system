@@ -11,6 +11,7 @@
 export type * from './models/User'
 export type * from './models/KnowledgeBase'
 export type * from './models/Document'
+export type * from './models/DocumentVersion'
 export type * from './models/Chunk'
 export type * from './models/ChatSession'
 export type * from './models/ChatMessage'

@@ -28,10 +28,12 @@ export type AggregateDocument = {
 
 export type DocumentAvgAggregateOutputType = {
   fileSize: number | null
+  version: number | null
 }
 
 export type DocumentSumAggregateOutputType = {
   fileSize: bigint | null
+  version: number | null
 }
 
 export type DocumentMinAggregateOutputType = {
@@ -44,6 +46,8 @@ export type DocumentMinAggregateOutputType = {
   status: string | null
   errorMessage: string | null
   isPublic: boolean | null
+  version: number | null
+  isLatest: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
   knowledgeBaseId: string | null
@@ -60,6 +64,8 @@ export type DocumentMaxAggregateOutputType = {
   status: string | null
   errorMessage: string | null
   isPublic: boolean | null
+  version: number | null
+  isLatest: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
   knowledgeBaseId: string | null
@@ -78,6 +84,8 @@ export type DocumentCountAggregateOutputType = {
   metadata: number
   tags: number
   isPublic: number
+  version: number
+  isLatest: number
   createdAt: number
   updatedAt: number
   knowledgeBaseId: number
@@ -88,10 +96,12 @@ export type DocumentCountAggregateOutputType = {
 
 export type DocumentAvgAggregateInputType = {
   fileSize?: true
+  version?: true
 }
 
 export type DocumentSumAggregateInputType = {
   fileSize?: true
+  version?: true
 }
 
 export type DocumentMinAggregateInputType = {
@@ -104,6 +114,8 @@ export type DocumentMinAggregateInputType = {
   status?: true
   errorMessage?: true
   isPublic?: true
+  version?: true
+  isLatest?: true
   createdAt?: true
   updatedAt?: true
   knowledgeBaseId?: true
@@ -120,6 +132,8 @@ export type DocumentMaxAggregateInputType = {
   status?: true
   errorMessage?: true
   isPublic?: true
+  version?: true
+  isLatest?: true
   createdAt?: true
   updatedAt?: true
   knowledgeBaseId?: true
@@ -138,6 +152,8 @@ export type DocumentCountAggregateInputType = {
   metadata?: true
   tags?: true
   isPublic?: true
+  version?: true
+  isLatest?: true
   createdAt?: true
   updatedAt?: true
   knowledgeBaseId?: true
@@ -243,6 +259,8 @@ export type DocumentGroupByOutputType = {
   metadata: runtime.JsonValue | null
   tags: string[]
   isPublic: boolean
+  version: number
+  isLatest: boolean
   createdAt: Date
   updatedAt: Date
   knowledgeBaseId: string
@@ -284,6 +302,8 @@ export type DocumentWhereInput = {
   metadata?: Prisma.JsonNullableFilter<"Document">
   tags?: Prisma.StringNullableListFilter<"Document">
   isPublic?: Prisma.BoolFilter<"Document"> | boolean
+  version?: Prisma.IntFilter<"Document"> | number
+  isLatest?: Prisma.BoolFilter<"Document"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Document"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Document"> | Date | string
   knowledgeBaseId?: Prisma.UuidFilter<"Document"> | string
@@ -291,6 +311,7 @@ export type DocumentWhereInput = {
   knowledgeBase?: Prisma.XOR<Prisma.KnowledgeBaseScalarRelationFilter, Prisma.KnowledgeBaseWhereInput>
   creator?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   chunks?: Prisma.ChunkListRelationFilter
+  versions?: Prisma.DocumentVersionListRelationFilter
 }
 
 export type DocumentOrderByWithRelationInput = {
@@ -305,6 +326,8 @@ export type DocumentOrderByWithRelationInput = {
   metadata?: Prisma.SortOrderInput | Prisma.SortOrder
   tags?: Prisma.SortOrder
   isPublic?: Prisma.SortOrder
+  version?: Prisma.SortOrder
+  isLatest?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   knowledgeBaseId?: Prisma.SortOrder
@@ -312,6 +335,7 @@ export type DocumentOrderByWithRelationInput = {
   knowledgeBase?: Prisma.KnowledgeBaseOrderByWithRelationInput
   creator?: Prisma.UserOrderByWithRelationInput
   chunks?: Prisma.ChunkOrderByRelationAggregateInput
+  versions?: Prisma.DocumentVersionOrderByRelationAggregateInput
 }
 
 export type DocumentWhereUniqueInput = Prisma.AtLeast<{
@@ -329,6 +353,8 @@ export type DocumentWhereUniqueInput = Prisma.AtLeast<{
   metadata?: Prisma.JsonNullableFilter<"Document">
   tags?: Prisma.StringNullableListFilter<"Document">
   isPublic?: Prisma.BoolFilter<"Document"> | boolean
+  version?: Prisma.IntFilter<"Document"> | number
+  isLatest?: Prisma.BoolFilter<"Document"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Document"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Document"> | Date | string
   knowledgeBaseId?: Prisma.UuidFilter<"Document"> | string
@@ -336,6 +362,7 @@ export type DocumentWhereUniqueInput = Prisma.AtLeast<{
   knowledgeBase?: Prisma.XOR<Prisma.KnowledgeBaseScalarRelationFilter, Prisma.KnowledgeBaseWhereInput>
   creator?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   chunks?: Prisma.ChunkListRelationFilter
+  versions?: Prisma.DocumentVersionListRelationFilter
 }, "id">
 
 export type DocumentOrderByWithAggregationInput = {
@@ -350,6 +377,8 @@ export type DocumentOrderByWithAggregationInput = {
   metadata?: Prisma.SortOrderInput | Prisma.SortOrder
   tags?: Prisma.SortOrder
   isPublic?: Prisma.SortOrder
+  version?: Prisma.SortOrder
+  isLatest?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   knowledgeBaseId?: Prisma.SortOrder
@@ -376,6 +405,8 @@ export type DocumentScalarWhereWithAggregatesInput = {
   metadata?: Prisma.JsonNullableWithAggregatesFilter<"Document">
   tags?: Prisma.StringNullableListFilter<"Document">
   isPublic?: Prisma.BoolWithAggregatesFilter<"Document"> | boolean
+  version?: Prisma.IntWithAggregatesFilter<"Document"> | number
+  isLatest?: Prisma.BoolWithAggregatesFilter<"Document"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Document"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Document"> | Date | string
   knowledgeBaseId?: Prisma.UuidWithAggregatesFilter<"Document"> | string
@@ -394,11 +425,14 @@ export type DocumentCreateInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tags?: Prisma.DocumentCreatetagsInput | string[]
   isPublic?: boolean
+  version?: number
+  isLatest?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   knowledgeBase: Prisma.KnowledgeBaseCreateNestedOneWithoutDocumentsInput
   creator?: Prisma.UserCreateNestedOneWithoutDocumentsInput
   chunks?: Prisma.ChunkCreateNestedManyWithoutDocumentInput
+  versions?: Prisma.DocumentVersionCreateNestedManyWithoutDocumentInput
 }
 
 export type DocumentUncheckedCreateInput = {
@@ -413,11 +447,14 @@ export type DocumentUncheckedCreateInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tags?: Prisma.DocumentCreatetagsInput | string[]
   isPublic?: boolean
+  version?: number
+  isLatest?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   knowledgeBaseId: string
   createdBy?: string | null
   chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutDocumentInput
+  versions?: Prisma.DocumentVersionUncheckedCreateNestedManyWithoutDocumentInput
 }
 
 export type DocumentUpdateInput = {
@@ -432,11 +469,14 @@ export type DocumentUpdateInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tags?: Prisma.DocumentUpdatetagsInput | string[]
   isPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  isLatest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   knowledgeBase?: Prisma.KnowledgeBaseUpdateOneRequiredWithoutDocumentsNestedInput
   creator?: Prisma.UserUpdateOneWithoutDocumentsNestedInput
   chunks?: Prisma.ChunkUpdateManyWithoutDocumentNestedInput
+  versions?: Prisma.DocumentVersionUpdateManyWithoutDocumentNestedInput
 }
 
 export type DocumentUncheckedUpdateInput = {
@@ -451,11 +491,14 @@ export type DocumentUncheckedUpdateInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tags?: Prisma.DocumentUpdatetagsInput | string[]
   isPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  isLatest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   knowledgeBaseId?: Prisma.StringFieldUpdateOperationsInput | string
   createdBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chunks?: Prisma.ChunkUncheckedUpdateManyWithoutDocumentNestedInput
+  versions?: Prisma.DocumentVersionUncheckedUpdateManyWithoutDocumentNestedInput
 }
 
 export type DocumentCreateManyInput = {
@@ -470,6 +513,8 @@ export type DocumentCreateManyInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tags?: Prisma.DocumentCreatetagsInput | string[]
   isPublic?: boolean
+  version?: number
+  isLatest?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   knowledgeBaseId: string
@@ -488,6 +533,8 @@ export type DocumentUpdateManyMutationInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tags?: Prisma.DocumentUpdatetagsInput | string[]
   isPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  isLatest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -504,6 +551,8 @@ export type DocumentUncheckedUpdateManyInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tags?: Prisma.DocumentUpdatetagsInput | string[]
   isPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  isLatest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   knowledgeBaseId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -540,6 +589,8 @@ export type DocumentCountOrderByAggregateInput = {
   metadata?: Prisma.SortOrder
   tags?: Prisma.SortOrder
   isPublic?: Prisma.SortOrder
+  version?: Prisma.SortOrder
+  isLatest?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   knowledgeBaseId?: Prisma.SortOrder
@@ -548,6 +599,7 @@ export type DocumentCountOrderByAggregateInput = {
 
 export type DocumentAvgOrderByAggregateInput = {
   fileSize?: Prisma.SortOrder
+  version?: Prisma.SortOrder
 }
 
 export type DocumentMaxOrderByAggregateInput = {
@@ -560,6 +612,8 @@ export type DocumentMaxOrderByAggregateInput = {
   status?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrder
   isPublic?: Prisma.SortOrder
+  version?: Prisma.SortOrder
+  isLatest?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   knowledgeBaseId?: Prisma.SortOrder
@@ -576,6 +630,8 @@ export type DocumentMinOrderByAggregateInput = {
   status?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrder
   isPublic?: Prisma.SortOrder
+  version?: Prisma.SortOrder
+  isLatest?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   knowledgeBaseId?: Prisma.SortOrder
@@ -584,6 +640,7 @@ export type DocumentMinOrderByAggregateInput = {
 
 export type DocumentSumOrderByAggregateInput = {
   fileSize?: Prisma.SortOrder
+  version?: Prisma.SortOrder
 }
 
 export type DocumentScalarRelationFilter = {
@@ -692,6 +749,28 @@ export type DocumentUpdatetagsInput = {
   push?: string | string[]
 }
 
+export type IntFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
+export type DocumentCreateNestedOneWithoutVersionsInput = {
+  create?: Prisma.XOR<Prisma.DocumentCreateWithoutVersionsInput, Prisma.DocumentUncheckedCreateWithoutVersionsInput>
+  connectOrCreate?: Prisma.DocumentCreateOrConnectWithoutVersionsInput
+  connect?: Prisma.DocumentWhereUniqueInput
+}
+
+export type DocumentUpdateOneRequiredWithoutVersionsNestedInput = {
+  create?: Prisma.XOR<Prisma.DocumentCreateWithoutVersionsInput, Prisma.DocumentUncheckedCreateWithoutVersionsInput>
+  connectOrCreate?: Prisma.DocumentCreateOrConnectWithoutVersionsInput
+  upsert?: Prisma.DocumentUpsertWithoutVersionsInput
+  connect?: Prisma.DocumentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.DocumentUpdateToOneWithWhereWithoutVersionsInput, Prisma.DocumentUpdateWithoutVersionsInput>, Prisma.DocumentUncheckedUpdateWithoutVersionsInput>
+}
+
 export type DocumentCreateNestedOneWithoutChunksInput = {
   create?: Prisma.XOR<Prisma.DocumentCreateWithoutChunksInput, Prisma.DocumentUncheckedCreateWithoutChunksInput>
   connectOrCreate?: Prisma.DocumentCreateOrConnectWithoutChunksInput
@@ -718,10 +797,13 @@ export type DocumentCreateWithoutCreatorInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tags?: Prisma.DocumentCreatetagsInput | string[]
   isPublic?: boolean
+  version?: number
+  isLatest?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   knowledgeBase: Prisma.KnowledgeBaseCreateNestedOneWithoutDocumentsInput
   chunks?: Prisma.ChunkCreateNestedManyWithoutDocumentInput
+  versions?: Prisma.DocumentVersionCreateNestedManyWithoutDocumentInput
 }
 
 export type DocumentUncheckedCreateWithoutCreatorInput = {
@@ -736,10 +818,13 @@ export type DocumentUncheckedCreateWithoutCreatorInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tags?: Prisma.DocumentCreatetagsInput | string[]
   isPublic?: boolean
+  version?: number
+  isLatest?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   knowledgeBaseId: string
   chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutDocumentInput
+  versions?: Prisma.DocumentVersionUncheckedCreateNestedManyWithoutDocumentInput
 }
 
 export type DocumentCreateOrConnectWithoutCreatorInput = {
@@ -783,6 +868,8 @@ export type DocumentScalarWhereInput = {
   metadata?: Prisma.JsonNullableFilter<"Document">
   tags?: Prisma.StringNullableListFilter<"Document">
   isPublic?: Prisma.BoolFilter<"Document"> | boolean
+  version?: Prisma.IntFilter<"Document"> | number
+  isLatest?: Prisma.BoolFilter<"Document"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Document"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Document"> | Date | string
   knowledgeBaseId?: Prisma.UuidFilter<"Document"> | string
@@ -801,10 +888,13 @@ export type DocumentCreateWithoutKnowledgeBaseInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tags?: Prisma.DocumentCreatetagsInput | string[]
   isPublic?: boolean
+  version?: number
+  isLatest?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   creator?: Prisma.UserCreateNestedOneWithoutDocumentsInput
   chunks?: Prisma.ChunkCreateNestedManyWithoutDocumentInput
+  versions?: Prisma.DocumentVersionCreateNestedManyWithoutDocumentInput
 }
 
 export type DocumentUncheckedCreateWithoutKnowledgeBaseInput = {
@@ -819,10 +909,13 @@ export type DocumentUncheckedCreateWithoutKnowledgeBaseInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tags?: Prisma.DocumentCreatetagsInput | string[]
   isPublic?: boolean
+  version?: number
+  isLatest?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   createdBy?: string | null
   chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutDocumentInput
+  versions?: Prisma.DocumentVersionUncheckedCreateNestedManyWithoutDocumentInput
 }
 
 export type DocumentCreateOrConnectWithoutKnowledgeBaseInput = {
@@ -851,6 +944,106 @@ export type DocumentUpdateManyWithWhereWithoutKnowledgeBaseInput = {
   data: Prisma.XOR<Prisma.DocumentUpdateManyMutationInput, Prisma.DocumentUncheckedUpdateManyWithoutKnowledgeBaseInput>
 }
 
+export type DocumentCreateWithoutVersionsInput = {
+  id?: string
+  filename: string
+  filePath?: string | null
+  fileSize?: bigint | number | null
+  fileType?: string | null
+  contentHash?: string | null
+  status?: string
+  errorMessage?: string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  tags?: Prisma.DocumentCreatetagsInput | string[]
+  isPublic?: boolean
+  version?: number
+  isLatest?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  knowledgeBase: Prisma.KnowledgeBaseCreateNestedOneWithoutDocumentsInput
+  creator?: Prisma.UserCreateNestedOneWithoutDocumentsInput
+  chunks?: Prisma.ChunkCreateNestedManyWithoutDocumentInput
+}
+
+export type DocumentUncheckedCreateWithoutVersionsInput = {
+  id?: string
+  filename: string
+  filePath?: string | null
+  fileSize?: bigint | number | null
+  fileType?: string | null
+  contentHash?: string | null
+  status?: string
+  errorMessage?: string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  tags?: Prisma.DocumentCreatetagsInput | string[]
+  isPublic?: boolean
+  version?: number
+  isLatest?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  knowledgeBaseId: string
+  createdBy?: string | null
+  chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutDocumentInput
+}
+
+export type DocumentCreateOrConnectWithoutVersionsInput = {
+  where: Prisma.DocumentWhereUniqueInput
+  create: Prisma.XOR<Prisma.DocumentCreateWithoutVersionsInput, Prisma.DocumentUncheckedCreateWithoutVersionsInput>
+}
+
+export type DocumentUpsertWithoutVersionsInput = {
+  update: Prisma.XOR<Prisma.DocumentUpdateWithoutVersionsInput, Prisma.DocumentUncheckedUpdateWithoutVersionsInput>
+  create: Prisma.XOR<Prisma.DocumentCreateWithoutVersionsInput, Prisma.DocumentUncheckedCreateWithoutVersionsInput>
+  where?: Prisma.DocumentWhereInput
+}
+
+export type DocumentUpdateToOneWithWhereWithoutVersionsInput = {
+  where?: Prisma.DocumentWhereInput
+  data: Prisma.XOR<Prisma.DocumentUpdateWithoutVersionsInput, Prisma.DocumentUncheckedUpdateWithoutVersionsInput>
+}
+
+export type DocumentUpdateWithoutVersionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  filename?: Prisma.StringFieldUpdateOperationsInput | string
+  filePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fileSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  fileType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  tags?: Prisma.DocumentUpdatetagsInput | string[]
+  isPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  isLatest?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  knowledgeBase?: Prisma.KnowledgeBaseUpdateOneRequiredWithoutDocumentsNestedInput
+  creator?: Prisma.UserUpdateOneWithoutDocumentsNestedInput
+  chunks?: Prisma.ChunkUpdateManyWithoutDocumentNestedInput
+}
+
+export type DocumentUncheckedUpdateWithoutVersionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  filename?: Prisma.StringFieldUpdateOperationsInput | string
+  filePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fileSize?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  fileType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  tags?: Prisma.DocumentUpdatetagsInput | string[]
+  isPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  isLatest?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  knowledgeBaseId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  chunks?: Prisma.ChunkUncheckedUpdateManyWithoutDocumentNestedInput
+}
+
 export type DocumentCreateWithoutChunksInput = {
   id?: string
   filename: string
@@ -863,10 +1056,13 @@ export type DocumentCreateWithoutChunksInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tags?: Prisma.DocumentCreatetagsInput | string[]
   isPublic?: boolean
+  version?: number
+  isLatest?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   knowledgeBase: Prisma.KnowledgeBaseCreateNestedOneWithoutDocumentsInput
   creator?: Prisma.UserCreateNestedOneWithoutDocumentsInput
+  versions?: Prisma.DocumentVersionCreateNestedManyWithoutDocumentInput
 }
 
 export type DocumentUncheckedCreateWithoutChunksInput = {
@@ -881,10 +1077,13 @@ export type DocumentUncheckedCreateWithoutChunksInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tags?: Prisma.DocumentCreatetagsInput | string[]
   isPublic?: boolean
+  version?: number
+  isLatest?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   knowledgeBaseId: string
   createdBy?: string | null
+  versions?: Prisma.DocumentVersionUncheckedCreateNestedManyWithoutDocumentInput
 }
 
 export type DocumentCreateOrConnectWithoutChunksInput = {
@@ -915,10 +1114,13 @@ export type DocumentUpdateWithoutChunksInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tags?: Prisma.DocumentUpdatetagsInput | string[]
   isPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  isLatest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   knowledgeBase?: Prisma.KnowledgeBaseUpdateOneRequiredWithoutDocumentsNestedInput
   creator?: Prisma.UserUpdateOneWithoutDocumentsNestedInput
+  versions?: Prisma.DocumentVersionUpdateManyWithoutDocumentNestedInput
 }
 
 export type DocumentUncheckedUpdateWithoutChunksInput = {
@@ -933,10 +1135,13 @@ export type DocumentUncheckedUpdateWithoutChunksInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tags?: Prisma.DocumentUpdatetagsInput | string[]
   isPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  isLatest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   knowledgeBaseId?: Prisma.StringFieldUpdateOperationsInput | string
   createdBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  versions?: Prisma.DocumentVersionUncheckedUpdateManyWithoutDocumentNestedInput
 }
 
 export type DocumentCreateManyCreatorInput = {
@@ -951,6 +1156,8 @@ export type DocumentCreateManyCreatorInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tags?: Prisma.DocumentCreatetagsInput | string[]
   isPublic?: boolean
+  version?: number
+  isLatest?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   knowledgeBaseId: string
@@ -968,10 +1175,13 @@ export type DocumentUpdateWithoutCreatorInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tags?: Prisma.DocumentUpdatetagsInput | string[]
   isPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  isLatest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   knowledgeBase?: Prisma.KnowledgeBaseUpdateOneRequiredWithoutDocumentsNestedInput
   chunks?: Prisma.ChunkUpdateManyWithoutDocumentNestedInput
+  versions?: Prisma.DocumentVersionUpdateManyWithoutDocumentNestedInput
 }
 
 export type DocumentUncheckedUpdateWithoutCreatorInput = {
@@ -986,10 +1196,13 @@ export type DocumentUncheckedUpdateWithoutCreatorInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tags?: Prisma.DocumentUpdatetagsInput | string[]
   isPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  isLatest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   knowledgeBaseId?: Prisma.StringFieldUpdateOperationsInput | string
   chunks?: Prisma.ChunkUncheckedUpdateManyWithoutDocumentNestedInput
+  versions?: Prisma.DocumentVersionUncheckedUpdateManyWithoutDocumentNestedInput
 }
 
 export type DocumentUncheckedUpdateManyWithoutCreatorInput = {
@@ -1004,6 +1217,8 @@ export type DocumentUncheckedUpdateManyWithoutCreatorInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tags?: Prisma.DocumentUpdatetagsInput | string[]
   isPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  isLatest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   knowledgeBaseId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1021,6 +1236,8 @@ export type DocumentCreateManyKnowledgeBaseInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tags?: Prisma.DocumentCreatetagsInput | string[]
   isPublic?: boolean
+  version?: number
+  isLatest?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   createdBy?: string | null
@@ -1038,10 +1255,13 @@ export type DocumentUpdateWithoutKnowledgeBaseInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tags?: Prisma.DocumentUpdatetagsInput | string[]
   isPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  isLatest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   creator?: Prisma.UserUpdateOneWithoutDocumentsNestedInput
   chunks?: Prisma.ChunkUpdateManyWithoutDocumentNestedInput
+  versions?: Prisma.DocumentVersionUpdateManyWithoutDocumentNestedInput
 }
 
 export type DocumentUncheckedUpdateWithoutKnowledgeBaseInput = {
@@ -1056,10 +1276,13 @@ export type DocumentUncheckedUpdateWithoutKnowledgeBaseInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tags?: Prisma.DocumentUpdatetagsInput | string[]
   isPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  isLatest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chunks?: Prisma.ChunkUncheckedUpdateManyWithoutDocumentNestedInput
+  versions?: Prisma.DocumentVersionUncheckedUpdateManyWithoutDocumentNestedInput
 }
 
 export type DocumentUncheckedUpdateManyWithoutKnowledgeBaseInput = {
@@ -1074,6 +1297,8 @@ export type DocumentUncheckedUpdateManyWithoutKnowledgeBaseInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tags?: Prisma.DocumentUpdatetagsInput | string[]
   isPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  isLatest?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1086,10 +1311,12 @@ export type DocumentUncheckedUpdateManyWithoutKnowledgeBaseInput = {
 
 export type DocumentCountOutputType = {
   chunks: number
+  versions: number
 }
 
 export type DocumentCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   chunks?: boolean | DocumentCountOutputTypeCountChunksArgs
+  versions?: boolean | DocumentCountOutputTypeCountVersionsArgs
 }
 
 /**
@@ -1109,6 +1336,13 @@ export type DocumentCountOutputTypeCountChunksArgs<ExtArgs extends runtime.Types
   where?: Prisma.ChunkWhereInput
 }
 
+/**
+ * DocumentCountOutputType without action
+ */
+export type DocumentCountOutputTypeCountVersionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.DocumentVersionWhereInput
+}
+
 
 export type DocumentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1122,6 +1356,8 @@ export type DocumentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   metadata?: boolean
   tags?: boolean
   isPublic?: boolean
+  version?: boolean
+  isLatest?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   knowledgeBaseId?: boolean
@@ -1129,6 +1365,7 @@ export type DocumentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   knowledgeBase?: boolean | Prisma.KnowledgeBaseDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.Document$creatorArgs<ExtArgs>
   chunks?: boolean | Prisma.Document$chunksArgs<ExtArgs>
+  versions?: boolean | Prisma.Document$versionsArgs<ExtArgs>
   _count?: boolean | Prisma.DocumentCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["document"]>
 
@@ -1144,6 +1381,8 @@ export type DocumentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   metadata?: boolean
   tags?: boolean
   isPublic?: boolean
+  version?: boolean
+  isLatest?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   knowledgeBaseId?: boolean
@@ -1164,6 +1403,8 @@ export type DocumentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   metadata?: boolean
   tags?: boolean
   isPublic?: boolean
+  version?: boolean
+  isLatest?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   knowledgeBaseId?: boolean
@@ -1184,17 +1425,20 @@ export type DocumentSelectScalar = {
   metadata?: boolean
   tags?: boolean
   isPublic?: boolean
+  version?: boolean
+  isLatest?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   knowledgeBaseId?: boolean
   createdBy?: boolean
 }
 
-export type DocumentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "filename" | "filePath" | "fileSize" | "fileType" | "contentHash" | "status" | "errorMessage" | "metadata" | "tags" | "isPublic" | "createdAt" | "updatedAt" | "knowledgeBaseId" | "createdBy", ExtArgs["result"]["document"]>
+export type DocumentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "filename" | "filePath" | "fileSize" | "fileType" | "contentHash" | "status" | "errorMessage" | "metadata" | "tags" | "isPublic" | "version" | "isLatest" | "createdAt" | "updatedAt" | "knowledgeBaseId" | "createdBy", ExtArgs["result"]["document"]>
 export type DocumentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   knowledgeBase?: boolean | Prisma.KnowledgeBaseDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.Document$creatorArgs<ExtArgs>
   chunks?: boolean | Prisma.Document$chunksArgs<ExtArgs>
+  versions?: boolean | Prisma.Document$versionsArgs<ExtArgs>
   _count?: boolean | Prisma.DocumentCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type DocumentIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1212,6 +1456,7 @@ export type $DocumentPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     knowledgeBase: Prisma.$KnowledgeBasePayload<ExtArgs>
     creator: Prisma.$UserPayload<ExtArgs> | null
     chunks: Prisma.$ChunkPayload<ExtArgs>[]
+    versions: Prisma.$DocumentVersionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1225,6 +1470,8 @@ export type $DocumentPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     metadata: runtime.JsonValue | null
     tags: string[]
     isPublic: boolean
+    version: number
+    isLatest: boolean
     createdAt: Date
     updatedAt: Date
     knowledgeBaseId: string
@@ -1626,6 +1873,7 @@ export interface Prisma__DocumentClient<T, Null = never, ExtArgs extends runtime
   knowledgeBase<T extends Prisma.KnowledgeBaseDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.KnowledgeBaseDefaultArgs<ExtArgs>>): Prisma.Prisma__KnowledgeBaseClient<runtime.Types.Result.GetResult<Prisma.$KnowledgeBasePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   creator<T extends Prisma.Document$creatorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Document$creatorArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   chunks<T extends Prisma.Document$chunksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Document$chunksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChunkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  versions<T extends Prisma.Document$versionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Document$versionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DocumentVersionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1666,6 +1914,8 @@ export interface DocumentFieldRefs {
   readonly metadata: Prisma.FieldRef<"Document", 'Json'>
   readonly tags: Prisma.FieldRef<"Document", 'String[]'>
   readonly isPublic: Prisma.FieldRef<"Document", 'Boolean'>
+  readonly version: Prisma.FieldRef<"Document", 'Int'>
+  readonly isLatest: Prisma.FieldRef<"Document", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Document", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Document", 'DateTime'>
   readonly knowledgeBaseId: Prisma.FieldRef<"Document", 'String'>
@@ -2111,6 +2361,30 @@ export type Document$chunksArgs<ExtArgs extends runtime.Types.Extensions.Interna
   take?: number
   skip?: number
   distinct?: Prisma.ChunkScalarFieldEnum | Prisma.ChunkScalarFieldEnum[]
+}
+
+/**
+ * Document.versions
+ */
+export type Document$versionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DocumentVersion
+   */
+  select?: Prisma.DocumentVersionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the DocumentVersion
+   */
+  omit?: Prisma.DocumentVersionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DocumentVersionInclude<ExtArgs> | null
+  where?: Prisma.DocumentVersionWhereInput
+  orderBy?: Prisma.DocumentVersionOrderByWithRelationInput | Prisma.DocumentVersionOrderByWithRelationInput[]
+  cursor?: Prisma.DocumentVersionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.DocumentVersionScalarFieldEnum | Prisma.DocumentVersionScalarFieldEnum[]
 }
 
 /**

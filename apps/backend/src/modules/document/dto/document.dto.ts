@@ -74,6 +74,12 @@ export class DocumentDetailDto {
   @ApiProperty({ description: '是否公开', example: true })
   isPublic: boolean;
 
+  @ApiProperty({ description: '版本号', example: 1 })
+  version: number;
+
+  @ApiProperty({ description: '是否是最新版本', example: true })
+  isLatest: boolean;
+
   @ApiProperty({ description: '创建时间', example: '2026-03-23T12:00:00Z' })
   createdAt: Date;
 
@@ -109,4 +115,58 @@ export class DocumentDetailDto {
     page: number | null;
     chunkIndex: number;
   }>;
+
+  @ApiProperty({ description: '历史版本', required: false })
+  versions?: Array<{
+    id: string;
+    version: number;
+    filename: string;
+    fileSize: number;
+    fileType: string | null;
+    contentHash: string | null;
+    status: string;
+    errorMessage: string | null;
+    tags: string[];
+    createdAt: Date;
+  }>;
+}
+
+export class DocumentVersionDto {
+  @ApiProperty({ description: '版本 ID', example: 'uuid-xxx' })
+  id: string;
+
+  @ApiProperty({ description: '版本号', example: 1 })
+  version: number;
+
+  @ApiProperty({ description: '文件名', example: 'employee-handbook.pdf' })
+  filename: string;
+
+  @ApiProperty({ description: '文件大小（字节）', example: 1048576 })
+  fileSize: number;
+
+  @ApiProperty({ description: '文件类型', example: 'pdf', enum: ['pdf', 'docx', 'markdown', 'txt'], required: false })
+  fileType?: string | null;
+
+  @ApiProperty({ description: '内容哈希', example: 'sha256-xxx', required: false })
+  contentHash?: string | null;
+
+  @ApiProperty({ description: '状态', example: 'indexed', enum: ['indexed', 'failed'] })
+  status: string;
+
+  @ApiProperty({ description: '错误信息', example: null, required: false })
+  errorMessage?: string | null;
+
+  @ApiProperty({ description: '标签', example: ['制度', '人事'], required: false })
+  tags?: string[];
+
+  @ApiProperty({ description: '创建时间', example: '2026-03-23T12:00:00Z' })
+  createdAt: Date;
+}
+
+export class DocumentVersionListResponseDto {
+  @ApiProperty({ description: '版本列表', type: [DocumentVersionDto] })
+  versions: DocumentVersionDto[];
+
+  @ApiProperty({ description: '总数', example: 5 })
+  total: number;
 }

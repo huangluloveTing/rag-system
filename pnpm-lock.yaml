@@ -306,6 +306,27 @@ importers:
         specifier: ^8.0.1
         version: 8.0.2(@types/node@24.12.0)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.3)
 
+<<<<<<< HEAD
+=======
+  demos/dlc:
+    dependencies:
+      tencentcloud-sdk-nodejs-dlc:
+        specifier: ^4.1.181
+        version: 4.1.181
+
+  demos/tencentcloud:
+    dependencies:
+      dotenv:
+        specifier: ^17.3.1
+        version: 17.3.1
+      tencentcloud-sdk-nodejs-cls:
+        specifier: ^4.1.201
+        version: 4.1.201
+      tencentcloud-sdk-nodejs-dlc:
+        specifier: ^4.1.181
+        version: 4.1.181
+
+>>>>>>> a541130 (feat: 完成文档管理模块所有功能)
 packages:
 
   '@ai-sdk/gateway@3.0.77':
@@ -3100,6 +3121,10 @@ packages:
 
   dotenv@16.6.1:
     resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
+    engines: {node: '>=12'}
+
+  dotenv@17.3.1:
+    resolution: {integrity: sha512-IO8C/dzEb6O3F9/twg6ZLXz164a2fhTnEWb95H23Dm4OuN+92NmEAlTrupP9VW6Jm3sO26tQlqyvyi4CsnY9GA==}
     engines: {node: '>=12'}
 
   duck@0.1.12:
@@ -5910,6 +5935,21 @@ packages:
   teex@1.0.1:
     resolution: {integrity: sha512-eYE6iEI62Ni1H8oIa7KlDU6uQBtqr4Eajni3wX7rpfXD8ysFx8z0+dri+KWEPWpBsxXfxu58x/0jvTVT1ekOSg==}
 
+<<<<<<< HEAD
+=======
+  tencentcloud-sdk-nodejs-cls@4.1.201:
+    resolution: {integrity: sha512-sUQItYV6xvLTM58obOxW/TJx6Ily7EsIKixoomtIBpouZ2E5H48LYses5c8xKwbbcGbfTJmCAoHb1ErS/7r1UA==}
+    engines: {node: '>=10'}
+
+  tencentcloud-sdk-nodejs-common@4.1.122:
+    resolution: {integrity: sha512-bzZ2f289vJz36l8bU/RZQrsvdLo/MNsETQ3w9KjTKknP4xJrmO8F+RE0nBuyKiEF0p+SR9V29it39lfjGnb4qg==}
+    engines: {node: '>=10'}
+
+  tencentcloud-sdk-nodejs-dlc@4.1.181:
+    resolution: {integrity: sha512-upPCwo5oNjihg+LSWO3F6MpxsG38DjJiPROQC6wo3dkGic5J7pjkMXbBhY/2x0+RNwzTJ3BMcR3XJszv8BXaVA==}
+    engines: {node: '>=10'}
+
+>>>>>>> a541130 (feat: 完成文档管理模块所有功能)
   terser-webpack-plugin@5.4.0:
     resolution: {integrity: sha512-Bn5vxm48flOIfkdl5CaD2+1CiUVbonWQ3KQPyP7/EuIl9Gbzq/gQFOzaMFUEgVjB1396tcK0SG8XcNJ/2kDH8g==}
     engines: {node: '>= 10.13.0'}
@@ -9437,6 +9477,8 @@ snapshots:
 
   dotenv@16.6.1: {}
 
+  dotenv@17.3.1: {}
+
   duck@0.1.12:
     dependencies:
       underscore: 1.13.8
@@ -12718,6 +12760,40 @@ snapshots:
       - bare-abort-controller
       - react-native-b4a
 
+<<<<<<< HEAD
+=======
+  tencentcloud-sdk-nodejs-cls@4.1.201:
+    dependencies:
+      tencentcloud-sdk-nodejs-common: 4.1.122
+      tslib: 1.13.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+
+  tencentcloud-sdk-nodejs-common@4.1.122:
+    dependencies:
+      form-data: 3.0.4
+      get-stream: 6.0.1
+      https-proxy-agent: 5.0.1
+      ini: 5.0.0
+      is-stream: 2.0.1
+      json-bigint: 1.0.0
+      node-fetch: 2.7.0
+      tslib: 1.13.0
+      uuid: 9.0.1
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+
+  tencentcloud-sdk-nodejs-dlc@4.1.181:
+    dependencies:
+      tencentcloud-sdk-nodejs-common: 4.1.122
+      tslib: 1.13.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+
+>>>>>>> a541130 (feat: 完成文档管理模块所有功能)
   terser-webpack-plugin@5.4.0(webpack@5.97.1):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31

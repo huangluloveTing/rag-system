@@ -55,6 +55,11 @@ export type KnowledgeBase = Prisma.KnowledgeBaseModel
  */
 export type Document = Prisma.DocumentModel
 /**
+ * Model DocumentVersion
+ * 
+ */
+export type DocumentVersion = Prisma.DocumentVersionModel
+/**
  * Model Chunk
  * 
  */
