@@ -24,7 +24,7 @@ const LoginPage: React.FC = () => {
       });
       
       // 保存 token
-      localStorage.setItem('token', res.data.token);
+      localStorage.setItem('token', res.data.access_token);
       message.success('登录成功');
       navigate('/');
     } catch (error: any) {
@@ -45,7 +45,7 @@ const LoginPage: React.FC = () => {
       });
       
       // 保存 token
-      localStorage.setItem('token', res.data.token);
+      localStorage.setItem('token', res.data.access_token);
       message.success('注册成功');
       navigate('/');
     } catch (error: any) {

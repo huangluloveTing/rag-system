@@ -39,7 +39,7 @@ export class KnowledgeBaseController {
     @Body() data: CreateKnowledgeBaseDto,
     @CurrentUser() user: any
   ) {
-    return this.kbService.create(data, user.userId);
+    return this.kbService.create(data, user.id);
   }
 
   @Get()

@@ -1,7 +1,7 @@
 /**
  * 认证相关 API
  */
-import { post } from '@/utils/request';
+import { get, post, patch } from '@/utils/request';
 
 // 登录请求参数
 export interface LoginParams {
@@ -16,36 +16,48 @@ export interface RegisterParams {
   password: string;
 }
 
-// 登录响应
-export interface LoginResponse {
-  token: string;
-  user: {
-    id: string;
-    username: string;
-    email: string;
-    role: string;
-  };
+// 后端 AuthResponseDto（简化前端需要的字段）
+export interface AuthResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+}
+
+export interface UserInfo {
+  id: string;
+  username: string;
+  email: string;
+  role: string;
+  createdAt?: string;
 }
 
 /**
  * 用户登录
  */
 export function login(data: LoginParams) {
-  return post<LoginResponse>('/v1/auth/login', data);
+  return post<AuthResponse>('/v1/auth/login', data);
 }
 
 /**
  * 用户注册
  */
 export function register(data: RegisterParams) {
-  return post<LoginResponse>('/v1/auth/register', data);
+  return post<AuthResponse>('/v1/auth/register', data);
 }
 
 /**
  * 获取当前用户信息
  */
 export function getCurrentUser() {
-  return post('/v1/users/me');
+  return get<UserInfo>('/v1/users/me');
+}
+
+/**
+ * 更新当前用户信息
+ */
+export function updateCurrentUser(data: Partial<Pick<UserInfo, 'username' | 'email'>>) {
+  return patch<UserInfo>('/v1/users/me', data);
 }
 
 /**
