@@ -2,6 +2,12 @@
  * 数据库种子数据脚本
  * 创建初始管理员账号和默认知识库
  */
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+// 加载环境变量
+config({ path: resolve(process.cwd(), '.env.local') });
+
 import { PrismaClient } from './generated/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import * as bcrypt from 'bcrypt';
