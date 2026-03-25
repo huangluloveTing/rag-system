@@ -38,39 +38,33 @@ request.interceptors.request.use(
 
 // 响应拦截器 - 统一处理错误
 request.interceptors.response.use(
-  (response: AxiosResponse<ResponseData>) => {
-    const res = response.data;
-    
-    // 如果返回的状态码不是 0，说明接口有错误
-    if (res.code !== 0) {
-      message.error(res.message || '接口请求失败');
-      
-      // 401: 未授权，跳转到登录页
-      if (res.code === 401) {
-        localStorage.removeItem('token');
-        window.location.href = '/login';
-      }
-      
-      return Promise.reject(new Error(res.message || '接口请求失败'));
-    }
-    
-    return response;
+  (response: AxiosResponse) => {
+    // NestJS 默认直接返回数据，包装为统一格式
+    return {
+      ...response,
+      data: {
+        code: 0,
+        data: response.data,
+        message: 'success',
+      },
+    };
   },
   (error) => {
     console.error('Response error:', error);
-    
+
     // 网络错误
     if (!error.response) {
       message.error('网络连接失败，请检查网络');
       return Promise.reject(error);
     }
-    
+
     const status = error.response.status;
-    
+
     switch (status) {
       case 401:
         message.error('未授权，请重新登录');
         localStorage.removeItem('token');
+        localStorage.removeItem('refresh_token');
         window.location.href = '/login';
         break;
       case 403:
@@ -85,7 +79,7 @@ request.interceptors.response.use(
       default:
         message.error(error.response.data?.message || '请求失败');
     }
-    
+
     return Promise.reject(error);
   }
 );

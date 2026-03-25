@@ -22,9 +22,12 @@ const LoginPage: React.FC = () => {
         username: values.username,
         password: values.password,
       });
-      
-      // 保存 token
-      localStorage.setItem('token', res.data.token);
+
+      // 保存 access_token
+      localStorage.setItem('token', res.data.access_token);
+      if (res.data.refresh_token) {
+        localStorage.setItem('refresh_token', res.data.refresh_token);
+      }
       message.success('登录成功');
       navigate('/');
     } catch (error: any) {
@@ -43,9 +46,12 @@ const LoginPage: React.FC = () => {
         email: values.email,
         password: values.password,
       });
-      
-      // 保存 token
-      localStorage.setItem('token', res.data.token);
+
+      // 保存 access_token
+      localStorage.setItem('token', res.data.access_token);
+      if (res.data.refresh_token) {
+        localStorage.setItem('refresh_token', res.data.refresh_token);
+      }
       message.success('注册成功');
       navigate('/');
     } catch (error: any) {

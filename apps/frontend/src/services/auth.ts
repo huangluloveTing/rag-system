@@ -1,7 +1,7 @@
 /**
  * 认证相关 API
  */
-import { post } from '@/utils/request';
+import { get, post } from '@/utils/request';
 
 // 登录请求参数
 export interface LoginParams {
@@ -18,8 +18,11 @@ export interface RegisterParams {
 
 // 登录响应
 export interface LoginResponse {
-  token: string;
-  user: {
+  access_token: string;
+  refresh_token?: string;
+  token_type: string;
+  expires_in: number;
+  user?: {
     id: string;
     username: string;
     email: string;
@@ -45,7 +48,7 @@ export function register(data: RegisterParams) {
  * 获取当前用户信息
  */
 export function getCurrentUser() {
-  return post('/v1/users/me');
+  return get('/v1/users/me');
 }
 
 /**
