@@ -1,0 +1,11 @@
+.documents-page {
+  padding: 24px;
+}
+
+.documents-page .ant-upload-drag {
+  background: #fafafa;
+}
+
+.documents-page .ant-upload-drag:hover {
+  border-color: #1890ff;
+}

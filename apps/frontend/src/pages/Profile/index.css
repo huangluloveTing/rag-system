@@ -1,0 +1,7 @@
+.profile-page {
+  padding: 24px;
+}
+
+.profile-page .ant-descriptions-bordered .ant-descriptions-item-label {
+  width: 120px;
+}

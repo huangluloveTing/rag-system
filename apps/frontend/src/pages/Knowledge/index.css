@@ -1,0 +1,11 @@
+.knowledge-page {
+  padding: 24px;
+}
+
+.knowledge-page .ant-card {
+  margin-bottom: 16px;
+}
+
+.knowledge-page .ant-card:last-child {
+  margin-bottom: 0;
+}

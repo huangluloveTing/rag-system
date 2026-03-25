@@ -1,0 +1,15 @@
+.home-page {
+  padding: 24px;
+}
+
+.home-page h1 {
+  margin: 0 0 24px 0;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.home-page .ant-card-hoverable:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+  transition: all 0.3s;
+}
