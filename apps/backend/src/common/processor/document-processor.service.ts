@@ -84,7 +84,19 @@ export class DocumentProcessor {
 
       this.logger.debug(`Generated ${embeddings.length} embeddings`);
 
-      // 6. 保存到数据库
+      // 6. 删除旧的 chunks 和向量数据
+      await this.prisma.chunk.deleteMany({
+        where: { docId: documentId },
+      });
+
+      this.logger.debug(`Deleted old chunks for document ${documentId}`);
+
+      // 删除 Qdrant 中的旧向量
+      await this.qdrantService.deleteByDocumentId(documentId);
+
+      this.logger.debug(`Deleted old vectors for document ${documentId}`);
+
+      // 7. 保存到数据库
       const savedChunks = await this.prisma.chunk.createMany({
         data: chunks.map((chunk, index) => ({
           chunkId: `${documentId}-${index}`,
@@ -98,18 +110,25 @@ export class DocumentProcessor {
 
       this.logger.debug(`Saved ${savedChunks.count} chunks to database`);
 
-      // 7. 存储到 Qdrant
-      const points = chunks.map((chunk, index) => ({
-        id: `${documentId}-${index}`,
-        vector: embeddings[index],
-        payload: {
-          documentId,
-          knowledgeBaseId: document.knowledgeBaseId,
-          content: chunk.content.substring(0, 500), // 只存储前 500 字符
-          page: chunk.page,
-          chunkIndex: chunk.chunkIndex,
-        },
-      }));
+      // 8. 存储到 Qdrant
+      const points = chunks.map((chunk, index) => {
+        // 使用确定性 ID：基于 documentId 和 index 生成数字 ID
+        // 通过哈希函数生成唯一的数字 ID
+        const numericId = this.generateNumericId(documentId, index);
+
+        return {
+          id: numericId,
+          vector: embeddings[index],
+          payload: {
+            documentId,
+            chunkId: `${documentId}-${index}`, // 在 payload 中保存原始 chunkId
+            knowledgeBaseId: document.knowledgeBaseId,
+            content: chunk.content.substring(0, 500), // 只存储前 500 字符
+            page: chunk.page,
+            chunkIndex: chunk.chunkIndex,
+          },
+        };
+      });
 
       await this.qdrantService.upsertPoints(points);
       this.logger.debug(`Stored ${points.length} vectors in Qdrant`);
@@ -132,6 +151,7 @@ export class DocumentProcessor {
         `Document processed successfully: ${documentId} (${Date.now() - startTime}ms)`
       );
     } catch (error) {
+      console.log(error)
       this.logger.error(`Failed to process document: ${error.message}`);
 
       // 更新错误状态
@@ -278,5 +298,28 @@ export class DocumentProcessor {
       this.logger.error(`Failed to delete document vectors: ${error.message}`);
       throw error;
     }
+  }
+
+  /**
+   * 生成确定性数字 ID（用于 Qdrant point ID）
+   * 将 documentId 和 index 组合转换为唯一的数字 ID
+   */
+  private generateNumericId(documentId: string, index: number): number {
+    // 使用简单但高效的哈希算法
+    // 将 UUID 字符串和索引转换为数字
+    const hash = this.hashString(documentId + '-' + index);
+    // 确保返回正整数（Qdrant 要求 unsigned integer）
+    return Math.abs(hash);
+  }
+
+  /**
+   * 字符串哈希函数（djb2 算法）
+   */
+  private hashString(str: string): number {
+    let hash = 5381;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash * 33) ^ str.charCodeAt(i);
+    }
+    return hash >>> 0; // 转换为无符号 32 位整数
   }
 }

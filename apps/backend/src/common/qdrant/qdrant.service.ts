@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { QdrantClient } from '@qdrant/js-client-rest';
 
 export interface VectorPoint {
-  id: string;
+  id: number;
   vector: number[];
   payload?: Record<string, any>;
 }
@@ -55,10 +55,13 @@ export class QdrantService implements OnModuleInit {
       );
 
       if (!exists) {
-        this.logger.log(`Creating collection: ${this.collectionName}`);
+        // 从环境变量获取向量维度，默认 2560 (qwen/qwen3-embedding-4b)
+        const vectorSize = this.configService.get<number>('EMBEDDING_DIMENSION', 2560);
+
+        this.logger.log(`Creating collection: ${this.collectionName} with vector size ${vectorSize}`);
         await this.client.createCollection(this.collectionName, {
           vectors: {
-            size: 1024, // bge-large-zh-v1.5 维度
+            size: vectorSize,
             distance: 'Cosine',
           },
         });

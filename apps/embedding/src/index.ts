@@ -1,69 +1,12 @@
 /**
  * Embedding + Rerank Service - TypeScript 版本
- * 使用 @xenova/transformers 在 Node.js 中运行本地模型
+ * 支持本地模型和外部 API 两种模式
  */
 
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
-dotenv.config();
-
-const app = express();
-const PORT = parseInt(process.env.PORT || '8001', 10);
-const HOST = process.env.HOST || '0.0.0.0';
-
-// 中间件
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
-
-// transformers 延迟加载（避免启动时引入可选原生依赖，例如 sharp）
-let transformers: typeof import('@xenova/transformers') | null = null;
-async function getTransformers() {
-  if (!transformers) {
-    transformers = await import('@xenova/transformers');
-    // 禁用 Transformers.js 的远程模型下载（使用本地模型）
-    transformers.env.allowLocalModels = true;
-    transformers.env.useBrowserCache = false;
-  }
-  return transformers;
-}
-
-// 模型缓存
-let embeddingPipeline: any = null;
-let rerankPipeline: any = null;
-
-/**
- * 加载 Embedding 模型
- */
-async function loadEmbeddingModel() {
-  if (!embeddingPipeline) {
-    console.log('🔄 Loading embedding model: bge-large-zh-v1.5...');
-    embeddingPipeline = await (await getTransformers()).pipeline(
-      'feature-extraction',
-      'Xenova/bge-large-zh-v1.5',
-      { quantized: false }
-    );
-    console.log('✅ Embedding model loaded.');
-  }
-  return embeddingPipeline;
-}
-
-/**
- * 加载 Rerank 模型
- */
-async function loadRerankModel() {
-  if (!rerankPipeline) {
-    console.log('🔄 Loading rerank model: bge-reranker-large...');
-    rerankPipeline = await (await getTransformers()).pipeline(
-      'text-classification',
-      'Xenova/bge-reranker-large',
-      { quantized: false }
-    );
-    console.log('✅ Rerank model loaded.');
-  }
-  return rerankPipeline;
-}
 
 // 请求类型定义
 interface EmbeddingRequest {
@@ -98,11 +41,149 @@ interface RerankResponse {
   model: string;
 }
 
+dotenv.config();
+
+const app = express();
+const PORT = parseInt(process.env.PORT || '8001', 10);
+const HOST = process.env.HOST || '0.0.0.0';
+
+// 配置
+const USE_LOCAL_MODELS = process.env.USE_LOCAL_MODELS !== 'false'; // 默认使用本地模型
+const EMBEDDING_API_URL = process.env.EMBEDDING_API_URL || '';
+const EMBEDDING_API_KEY = process.env.EMBEDDING_API_KEY || '';
+const RERANK_API_URL = process.env.RERANK_API_URL || '';
+const RERANK_API_KEY = process.env.RERANK_API_KEY || '';
+
+// 中间件
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+
+/**
+ * 调用外部 Embedding API
+ */
+async function callEmbeddingAPI(texts: string[]): Promise<number[][]> {
+  if (!EMBEDDING_API_URL || !EMBEDDING_API_KEY) {
+    throw new Error('Embedding API URL or API Key not configured');
+  }
+  
+
+  const response = await fetch(EMBEDDING_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${EMBEDDING_API_KEY}`
+    },
+    body: JSON.stringify({
+      model: process.env.EMBEDDING_MODEL || 'BAAI/bge-large-zh-v1.5',
+      input: texts,
+      encoding_format: 'float'
+    })
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Embedding API failed: ${response.status} - ${error}`);
+  }
+
+  const data = await response.json();
+  // 按原始顺序返回 embeddings
+  const sortedData = data.data.sort((a: any, b: any) => a.index - b.index);
+  return sortedData.map((item: any) => item.embedding);
+}
+
+/**
+ * 调用外部 Rerank API
+ */
+async function callRerankAPI(query: string, documents: string[], topK: number): Promise<Array<{ index: number; score: number }>> {
+  if (!RERANK_API_URL) {
+    throw new Error('Rerank API URL not configured');
+  }
+
+  // 判断是否是 Ollama API（通过 URL 判断）
+  const isOllama = RERANK_API_URL.includes('localhost:11434') || RERANK_API_URL.includes('127.0.0.1:11434');
+
+  if (isOllama) {
+    // Ollama API 格式
+    const results: Array<{ index: number; score: number }> = [];
+
+    for (let i = 0; i < documents.length; i++) {
+      const response = await fetch(`${RERANK_API_URL}/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: process.env.RERANK_MODEL || 'dengcao/Qwen3-Reranker-0.6B:Q8_0',
+          prompt: `Query: ${query}\nDocument: ${documents[i]}\nScore:`,
+          stream: false,
+          options: {
+            num_predict: 10  // 只预测分数
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Ollama Rerank API failed: ${response.status} - ${error}`);
+      }
+
+      const data = await response.json();
+      // Ollama 返回的是生成的文本，需要解析分数
+      const responseText = data.response || '';
+      // 尝试从响应中提取分数（假设模型输出包含数字）
+      const scoreMatch = responseText.match(/(\d+\.?\d*)/);
+      const score = scoreMatch ? parseFloat(scoreMatch[1]) : 0;
+
+      results.push({ index: i, score });
+    }
+
+    // 按分数降序排序并返回 topK
+    return results
+      .sort((a, b) => b.score - a.score)
+      .slice(0, topK);
+  } else {
+    // 标准 Rerank API 格式（如 SiliconFlow）
+    if (!RERANK_API_KEY) {
+      throw new Error('Rerank API Key not configured for external API');
+    }
+
+    const response = await fetch(`${RERANK_API_URL}/rerank`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${RERANK_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: process.env.RERANK_MODEL || 'BAAI/bge-reranker-large',
+        query,
+        documents,
+        top_n: topK
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Rerank API failed: ${response.status} - ${error}`);
+    }
+
+    const data = await response.json();
+    return data.results.map((item: any) => ({
+      index: item.index,
+      score: item.relevance_score
+    }));
+  }
+}
+
+
 /**
  * 健康检查接口
  */
 app.get('/health', (req: Request, res: Response) => {
-  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    mode: USE_LOCAL_MODELS ? 'local' : 'api'
+  });
 });
 
 /**
@@ -120,22 +201,10 @@ app.post('/embed', async (req: Request, res: Response) => {
       });
     }
 
-    console.log(`📊 Generating embeddings for ${texts.length} texts...`);
+    console.log(`📊 Generating embeddings for ${texts.length} texts... (mode: ${USE_LOCAL_MODELS ? 'local' : 'api'})`);
 
-    // 加载模型
-    const extractor = await loadEmbeddingModel();
-
-    // 生成 embeddings
-    const output = await extractor(texts, {
-      pooling: 'mean',
-      normalize: true
-    });
-
-    // 转换为数组格式
-    const embeddings = Array.from(output.data) as number[][];
-
-    // 计算 token 数（估算）
-    const promptTokens = texts.reduce((sum, text) => sum + text.split(/\s+/).length, 0);
+    let embeddings: number[][] = await callEmbeddingAPI(texts);
+    let promptTokens = texts.reduce((sum, text) => sum + text.split(/\s+/).length, 0);
 
     const response: EmbeddingResponse = {
       embeddings,
@@ -179,39 +248,20 @@ app.post('/rerank', async (req: Request, res: Response) => {
       });
     }
 
-    console.log(`📊 Reranking ${documents.length} documents for query: "${query.substring(0, 50)}..."`);
+    console.log(`📊 Reranking ${documents.length} documents for query: "${query.substring(0, 50)}..." (mode: ${USE_LOCAL_MODELS ? 'local' : 'api'})`);
 
-    // 加载模型
-    const ranker = await loadRerankModel();
+    let results: RerankResult[];
 
-    // 构建句子对
-    const pairs = documents.map(doc => [query, doc]);
+    
+      // 外部 API
+      const apiResults = await callRerankAPI(query, documents, top_k);
 
-    // 计算相关性分数
-    const scores: number[] = [];
-    for (const pair of pairs) {
-      const result = await ranker(pair, { topk: 1 });
-      // 提取分数（根据不同模型格式）
-      const score = result[0]?.score || result[0]?.probability || 0;
-      scores.push(score);
-    }
-
-    // 创建带索引的分数列表
-    const indexedScores = scores.map((score, index) => ({ index, score }));
-
-    // 按分数降序排序
-    const sortedResults = indexedScores.sort((a, b) => b.score - a.score);
-
-    // 取 top_k
-    const topResults = sortedResults.slice(0, top_k);
-
-    // 构建返回结果
-    const results: RerankResult[] = topResults.map((item, rank) => ({
-      index: item.index,
-      document: documents[item.index],
-      score: item.score,
-      rank: rank + 1
-    }));
+      results = apiResults.map((item, rank) => ({
+        index: item.index,
+        document: documents[item.index],
+        score: item.score,
+        rank: rank + 1
+      }));
 
     const response: RerankResponse = {
       results,
@@ -235,14 +285,17 @@ app.post('/rerank', async (req: Request, res: Response) => {
  */
 app.get('/models', async (req: Request, res: Response) => {
   res.json({
+    mode: USE_LOCAL_MODELS ? 'local' : 'api',
     embedding: {
-      model: 'Xenova/bge-large-zh-v1.5',
+      model: process.env.EMBEDDING_MODEL || 'BAAI/bge-large-zh-v1.5',
       dimension: 1024,
-      loaded: !!embeddingPipeline
+      loaded: USE_LOCAL_MODELS ? !!embeddingPipeline : true,
+      api_url: USE_LOCAL_MODELS ? null : EMBEDDING_API_URL
     },
     rerank: {
-      model: 'Xenova/bge-reranker-large',
-      loaded: !!rerankPipeline
+      model: process.env.RERANK_MODEL || 'BAAI/bge-reranker-large',
+      loaded: USE_LOCAL_MODELS ? !!rerankPipeline : true,
+      api_url: USE_LOCAL_MODELS ? null : RERANK_API_URL
     }
   });
 });
@@ -252,23 +305,22 @@ app.get('/models', async (req: Request, res: Response) => {
  */
 async function startServer() {
   try {
-    // 预加载模型（可选，避免首次请求慢）
-    if (process.env.PRELOAD_MODELS === 'true') {
-      console.log('🔄 Preloading models...');
-      await loadEmbeddingModel();
-      await loadRerankModel();
-      console.log('✅ Models preloaded.');
-    }
-
     app.listen(PORT, HOST, () => {
       console.log(`
 ╔════════════════════════════════════════════════════════╗
 ║  🚀 Embedding Service Started                          ║
 ║  Host: ${HOST.padEnd(40)}║
 ║  Port: ${String(PORT).padEnd(40)}║
+║  Mode: ${(USE_LOCAL_MODELS ? 'Local Models' : 'External API').padEnd(38)}║
 ║  Models: bge-large-zh-v1.5, bge-reranker-large         ║
 ╚════════════════════════════════════════════════════════╝
       `);
+
+      if (!USE_LOCAL_MODELS) {
+        console.log('📡 Using external APIs:');
+        console.log(`   Embedding: ${EMBEDDING_API_URL || 'Not configured'}`);
+        console.log(`   Rerank: ${RERANK_API_URL || 'Not configured'}`);
+      }
     });
   } catch (error: any) {
     console.error('❌ Failed to start server:', error.message);
@@ -289,3 +341,5 @@ process.on('SIGINT', () => {
 
 // 启动服务
 startServer();
+
+
