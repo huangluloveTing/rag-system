@@ -60,6 +60,11 @@ export class DocumentController {
       throw new BadRequestException('请指定知识库 ID');
     }
 
+    // 修复文件名编码（Multer 默认使用 Latin-1，需要转换为 UTF-8）
+    if (file.originalname) {
+      file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
+    }
+
     // 验证文件大小
     const maxFileSize = this.configService.get<number>('MAX_FILE_SIZE', 52428800);
     if (file.size > maxFileSize) {
@@ -104,6 +109,13 @@ export class DocumentController {
     if (!knowledgeBaseId) {
       throw new BadRequestException('请指定知识库 ID');
     }
+
+    // 修复所有文件的文件名编码
+    files.forEach((file) => {
+      if (file.originalname) {
+        file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
+      }
+    });
 
     // 验证文件大小
     const maxFileSize = this.configService.get<number>('MAX_FILE_SIZE', 52428800);

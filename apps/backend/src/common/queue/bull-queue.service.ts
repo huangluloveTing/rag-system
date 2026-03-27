@@ -4,8 +4,8 @@
  */
 
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import * as Bull from 'bull';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue, Job } from 'bull';
 
 export interface DocumentProcessingJob {
   documentId: string;
@@ -22,35 +22,12 @@ export interface JobResult {
 @Injectable()
 export class BullQueueService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(BullQueueService.name);
-  private queue: Bull.Queue;
 
-  constructor(private configService: ConfigService) {}
+  constructor(
+    @InjectQueue('document-processing') private readonly queue: Queue<DocumentProcessingJob>,
+  ) {}
 
   async onModuleInit() {
-    const redisUrl = this.configService.get<string>('REDIS_URL', 'redis://localhost:6379');
-
-    // 创建队列
-    this.queue = new Bull('document-processing', redisUrl, {
-      defaultJobOptions: {
-        attempts: 3,
-        backoff: {
-          type: 'exponential',
-          delay: 1000,
-        },
-        removeOnComplete: 100,
-        removeOnFail: 1000,
-      },
-    });
-
-    // 监听队列事件
-    this.queue.on('error', (err) => {
-      this.logger.error('Queue error:', err);
-    });
-
-    this.queue.on('waiting', (jobId) => {
-      this.logger.debug(`Job ${jobId} waiting`);
-    });
-
     this.logger.log('Bull queue initialized');
   }
 
@@ -64,7 +41,7 @@ export class BullQueueService implements OnModuleInit, OnModuleDestroy {
   /**
    * 添加文档处理任务到队列
    */
-  async addDocumentJob(data: DocumentProcessingJob): Promise<Bull.Job<DocumentProcessingJob>> {
+  async addDocumentJob(data: DocumentProcessingJob): Promise<Job<DocumentProcessingJob>> {
     const job = await this.queue.add(data, {
       removeOnComplete: true,
       removeOnFail: true,
@@ -76,7 +53,7 @@ export class BullQueueService implements OnModuleInit, OnModuleDestroy {
   /**
    * 添加文档处理任务（别名，兼容旧代码）
    */
-  async addDocumentProcessingJob(data: DocumentProcessingJob): Promise<Bull.Job<DocumentProcessingJob>> {
+  async addDocumentProcessingJob(data: DocumentProcessingJob): Promise<Job<DocumentProcessingJob>> {
     return this.addDocumentJob(data);
   }
 

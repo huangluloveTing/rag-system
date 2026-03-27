@@ -82,6 +82,9 @@ export class MinioService {
       const objectName = folder ? `${folder}/${fileName}` : fileName;
 
       // 上传文件
+      // 对原始文件名进行 Base64 编码，避免 HTTP header 不支持中文字符的问题
+      const encodedOriginalName = Buffer.from(file.originalname, 'utf-8').toString('base64');
+
       await this.client.putObject(
         bucketName,
         objectName,
@@ -89,7 +92,7 @@ export class MinioService {
         file.size,
         {
           'Content-Type': file.mimetype,
-          'X-Amz-Meta-Original-Name': file.originalname,
+          'X-Amz-Meta-Original-Name': encodedOriginalName,
         },
       );
 

@@ -80,6 +80,8 @@ const DocumentsPage: React.FC = () => {
   const [versionsLoading, setVersionsLoading] = useState(false);
   const [versions, setVersions] = useState<DocumentVersionDto[]>([]);
 
+  const [fileList, setFileList] = useState<any[]>([]);
+
   const fetchKbs = async () => {
     setKbLoading(true);
     try {
@@ -212,8 +214,12 @@ const DocumentsPage: React.FC = () => {
   const uploadProps: UploadProps = {
     multiple: true,
     maxCount: 20,
+    fileList,
     showUploadList: true,
     beforeUpload: () => false, // 阻止默认上传
+    onChange: ({ fileList }) => {
+      setFileList(fileList);
+    },
     customRequest: async (options) => {
       const file = options.file as File;
       if (!selectedKbId) {
@@ -238,11 +244,47 @@ const DocumentsPage: React.FC = () => {
           });
           options.onSuccess?.(res.data, undefined as any);
         }
+        // 清空文件列表
+        setFileList([]);
         await fetchDocs({ page: 1 });
       } catch (e) {
         options.onError?.(e as Error);
       }
     },
+  };
+
+  const handleUpload = async () => {
+    if (!selectedKbId) {
+      return;
+    }
+
+    if (fileList.length === 0) {
+      return;
+    }
+
+    try {
+      const files = fileList.map((item) => item.originFileObj).filter(Boolean) as File[];
+
+      if (files.length === 1) {
+        await uploadDocument(files[0], {
+          knowledge_base_id: selectedKbId,
+          tags: tags || undefined,
+          is_public: 'true',
+        });
+      } else {
+        await uploadDocuments(files, {
+          knowledge_base_id: selectedKbId,
+          tags: tags || undefined,
+          is_public: 'true',
+        });
+      }
+
+      // 清空文件列表
+      setFileList([]);
+      await fetchDocs({ page: 1 });
+    } catch (error) {
+      console.error('上传失败:', error);
+    }
   };
 
   const columns: ColumnsType<DocumentDto> = [
@@ -427,10 +469,19 @@ const DocumentsPage: React.FC = () => {
                   <InboxOutlined />
                 </p>
                 <p className="ant-upload-text">
-                  拖拽文件到这里，或点击上传（需先选择知识库）
+                  拖拽文件到这里，或点击选择文件（需先选择知识库）
                 </p>
                 <p className="ant-upload-hint">支持 PDF / DOCX / Markdown / TXT / HTML</p>
               </Dragger>
+              <div style={{ marginTop: 16, textAlign: 'right' }}>
+                <Button
+                  type="primary"
+                  onClick={handleUpload}
+                  disabled={!selectedKbId || fileList.length === 0}
+                >
+                  上传文件 ({fileList.length} 个文件已选择)
+                </Button>
+              </div>
             </div>
           </Card>
 
