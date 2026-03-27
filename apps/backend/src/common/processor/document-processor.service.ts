@@ -12,12 +12,17 @@ import { EmbeddingService } from '../embedding/embedding.service';
 import * as pdfParse from 'pdf-parse';
 import * as mammoth from 'mammoth';
 import * as MarkdownIt from 'markdown-it';
+import { RecursiveCharacterTextSplitter, MarkdownTextSplitter } from '@langchain/textsplitters';
 
 export interface ChunkData {
   content: string;
   page?: number;
   chunkIndex: number;
-  metadata?: any;
+  metadata?: {
+    title?: string;       // 所属章节标题
+    level?: number;       // 标题层级（1-6）
+    sectionIndex?: number; // 章节索引
+  };
 }
 
 @Injectable()
@@ -73,8 +78,8 @@ export class DocumentProcessor {
 
       this.logger.debug(`Extracted ${text.length} characters`);
 
-      // 4. 分块
-      const chunks = this.splitText(text);
+      // 4. 分块（使用 LangChain 分割器）
+      const chunks = await this.splitText(text, document.fileType || 'unknown');
       this.logger.debug(`Split into ${chunks.length} chunks`);
 
       // 5. 批量生成向量
@@ -210,66 +215,131 @@ export class DocumentProcessor {
   }
 
   /**
-   * 文本分块
+   * 文本分块（使用 LangChain 分割器）
    */
-  private splitText(text: string): ChunkData[] {
+  private async splitText(text: string, fileType?: string): Promise<ChunkData[]> {
+    try {
+      // 根据文件类型选择合适的分割策略
+      if (fileType === 'markdown' || fileType === 'md') {
+        return await this.splitMarkdownWithLangChain(text);
+      }
+
+      // 其他文档类型使用递归字符分割器
+      return await this.splitTextWithLangChain(text);
+    } catch (error) {
+      this.logger.error(`LangChain splitting failed: ${error.message}, falling back to basic splitting`);
+      // 兜底方案
+      return this.splitByParagraphs(text);
+    }
+  }
+
+  /**
+   * 使用 LangChain MarkdownTextSplitter 分割 Markdown
+   * 基于 Markdown 标题结构进行分割
+   */
+  private async splitMarkdownWithLangChain(text: string): Promise<ChunkData[]> {
+    // 创建 Markdown 分割器
+    const markdownSplitter = new MarkdownTextSplitter({
+      chunkSize: this.chunkSize,
+      chunkOverlap: this.chunkOverlap,
+    });
+
+    // 分割文档
+    const mdSplits = await markdownSplitter.splitText(text);
+
+    this.logger.debug(`Markdown split into ${mdSplits.length} sections`);
+
+    // 转换为我们的 ChunkData 格式
     const chunks: ChunkData[] = [];
 
-    // 按段落分割
+    for (let i = 0; i < mdSplits.length; i++) {
+      const split = mdSplits[i];
+
+      // 尝试提取标题信息
+      const titleMatch = split.match(/^#+\s+(.+)\n/);
+      const title = titleMatch ? titleMatch[1].trim() : '';
+      const level = titleMatch ? (split.match(/^#+/)?.[0]?.length || 0) : 0;
+
+      chunks.push({
+        content: split,
+        chunkIndex: chunks.length,
+        metadata: {
+          title,
+          level: Math.min(level, 4),
+          sectionIndex: i,
+        },
+      });
+    }
+
+    this.logger.debug(`Markdown split into ${chunks.length} chunks with LangChain`);
+    return chunks;
+  }
+
+  /**
+   * 使用 LangChain RecursiveCharacterTextSplitter 分割普通文本
+   * 按段落、句子、字符递归分割
+   */
+  private async splitTextWithLangChain(text: string): Promise<ChunkData[]> {
+    const splitter = new RecursiveCharacterTextSplitter({
+      chunkSize: this.chunkSize,
+      chunkOverlap: this.chunkOverlap,
+      // 中文优化的分隔符优先级
+      separators: [
+        '\n\n',      // 段落
+        '\n',        // 行
+        '。',        // 中文句号
+        '！',        // 中文感叹号
+        '？',        // 中文问号
+        '.',         // 英文句号
+        '!',         // 英文感叹号
+        '?',         // 英文问号
+        '；',        // 中文分号
+        ';',         // 英文分号
+        ' ',         // 空格
+        '',          // 字符
+      ],
+    });
+
+    const splits = await splitter.splitText(text);
+
+    const chunks: ChunkData[] = splits.map((split, index) => ({
+      content: split,
+      chunkIndex: index,
+      metadata: {},
+    }));
+
+    this.logger.debug(`Text split into ${chunks.length} chunks with LangChain`);
+    return chunks;
+  }
+
+  /**
+   * 兜底方案：简单的段落分块（当 LangChain 分割失败时使用）
+   */
+  private splitByParagraphs(text: string): ChunkData[] {
+    const chunks: ChunkData[] = [];
     const paragraphs = text.split(/\n\n+/).filter((p) => p.trim().length > 0);
 
     let currentChunk = '';
     let chunkIndex = 0;
 
     for (const paragraph of paragraphs) {
-      // 如果单个段落就超过 chunk 大小，需要进一步分割
-      if (paragraph.length > this.chunkSize) {
-        // 先保存当前块
+      if (currentChunk.length + paragraph.length + 2 > this.chunkSize) {
+        // 当前块已满，保存
         if (currentChunk.trim().length > 0) {
           chunks.push({
             content: currentChunk.trim(),
             chunkIndex: chunkIndex++,
           });
-          currentChunk = '';
-        }
-
-        // 分割大段落
-        const sentences = paragraph.split(/([。！？\n])/);
-        let tempChunk = '';
-
-        for (let i = 0; i < sentences.length; i += 2) {
-          const sentence = sentences[i] + (sentences[i + 1] || '');
-
-          if (tempChunk.length + sentence.length > this.chunkSize) {
-            if (tempChunk.trim().length > 0) {
-              chunks.push({
-                content: tempChunk.trim(),
-                chunkIndex: chunkIndex++,
-              });
-            }
-            tempChunk = sentence;
-          } else {
-            tempChunk += sentence;
-          }
-        }
-
-        if (tempChunk.trim().length > 0) {
-          currentChunk = tempChunk;
-        }
-      } else {
-        // 添加段落到当前块
-        if (currentChunk.length + paragraph.length + 2 > this.chunkSize) {
-          // 当前块已满，保存
-          if (currentChunk.trim().length > 0) {
-            chunks.push({
-              content: currentChunk.trim(),
-              chunkIndex: chunkIndex++,
-            });
-          }
           currentChunk = paragraph;
         } else {
-          currentChunk += (currentChunk ? '\n\n' : '') + paragraph;
+          // 单个段落就超过限制，强制添加
+          chunks.push({
+            content: paragraph.trim(),
+            chunkIndex: chunkIndex++,
+          });
         }
+      } else {
+        currentChunk += (currentChunk ? '\n\n' : '') + paragraph;
       }
     }
 
@@ -281,6 +351,7 @@ export class DocumentProcessor {
       });
     }
 
+    this.logger.debug(`Fallback: split into ${chunks.length} chunks by paragraphs`);
     return chunks;
   }
 
