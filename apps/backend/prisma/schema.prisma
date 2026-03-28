@@ -149,8 +149,9 @@ model ChatMessage {
   references Json?    // 引用的文档片段
   latencyMs  Int?
   tokensUsed Int?
+  toolCalls  Json?
   createdAt  DateTime @default(now())
-  
+
   sessionId  String @db.Uuid
   session    ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   
