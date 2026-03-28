@@ -3,20 +3,20 @@
  * 使用 Vercel AI SDK 集成通义千问 API（兼容 OpenAI）
  */
 
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { createOpenAI } from '@ai-sdk/openai';
-import { generateText, streamText } from 'ai';
-import { z } from 'zod';
-import { RetrievalService } from '../retrieval/retrieval.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { createOpenAI } from "@ai-sdk/openai";
+import { generateText, streamText, Tool, ToolSet } from "ai";
+import { z } from "zod";
+import { RetrievalService } from "../retrieval/retrieval.service";
 
 export interface ChatMessage {
-  role: 'system' | 'user' | 'assistant';
+  role: "system" | "user" | "assistant";
   content: string;
 }
 
 export interface ToolResult {
-  status: 'success' | 'no_results' | 'error';
+  status: "success" | "no_results" | "error";
   message: string;
   results: Array<{
     index: number;
@@ -56,16 +56,19 @@ export class LlmService {
 
   constructor(
     private configService: ConfigService,
-    private retrievalService: RetrievalService
+    private retrievalService: RetrievalService,
   ) {
     const apiKey = this.configService.get<string>(
-      'LLM_API_KEY',
-      'sk-your-api-key-here'
+      "LLM_API_KEY",
+      "sk-your-api-key-here",
     );
-    this.model = this.configService.get<string>('LLM_MODEL', 'qwen/qwen3.5-plus');
+    this.model = this.configService.get<string>(
+      "LLM_MODEL",
+      "qwen/qwen3.5-plus",
+    );
     const baseUrl = this.configService.get<string>(
-      'LLM_BASE_URL',
-      'https://dashscope.aliyuncs.com/compatible-mode/v1'
+      "LLM_BASE_URL",
+      "https://dashscope.aliyuncs.com/compatible-mode/v1",
     );
 
     // 创建兼容 OpenAI 的 provider
@@ -77,10 +80,11 @@ export class LlmService {
     this.logger.log(`LLM Service initialized with model: ${this.model}`);
   }
 
-  getKnowledgeBaseSearchTool() {
+  getKnowledgeBaseSearchTool(): ToolSet {
     return {
       knowledge_base_search: {
-        description: `搜索知识库以获取与用户问题相关的文档内容。
+        description: `
+搜索知识库以获取与用户问题相关的文档内容。
 
 适用场景：
 - 用户询问特定领域的专业知识、技术细节
@@ -90,20 +94,40 @@ export class LlmService {
 不适用场景：
 - 简单问候、闲聊
 - 通用常识问题
-- 明确要求不使用知识库的问题`,
-
-        parameters: z.object({
-          query: z.string().describe('搜索查询文本，建议提取问题的关键词或核心表述'),
-          topK: z.number().min(1).max(10).default(5).describe('返回结果数量，建议 3-5'),
-          similarityThreshold: z.number().min(0).max(1).default(0.3).describe('相似度阈值，建议 0.3-0.5，越高要求越严格'),
+- 明确要求不使用知识库的问题
+`,
+        inputSchema: z.object({
+          query: z
+            .string()
+            .describe("搜索查询文本，建议提取问题的关键词或核心表述"),
+          topK: z
+            .number()
+            .min(1)
+            .max(10)
+            .default(5)
+            .describe("返回结果数量，建议 3-5"),
+          similarityThreshold: z
+            .number()
+            .min(0)
+            .max(1)
+            .default(0.3)
+            .describe("相似度阈值，建议 0.3-0.5，越高要求越严格"),
         }),
 
-        execute: async ({ query, topK, similarityThreshold }: {
+        execute: async ({
+          query,
+          topK,
+          similarityThreshold,
+        }: {
           query: string;
           topK: number;
           similarityThreshold: number;
         }): Promise<ToolResult> => {
-          return await this.executeKnowledgeBaseSearch(query, topK, similarityThreshold);
+          return await this.executeKnowledgeBaseSearch(
+            query,
+            topK,
+            similarityThreshold,
+          );
         },
       },
     };
@@ -112,10 +136,12 @@ export class LlmService {
   private async executeKnowledgeBaseSearch(
     query: string,
     topK: number,
-    similarityThreshold: number
+    similarityThreshold: number,
   ): Promise<ToolResult> {
     try {
-      this.logger.debug(`Tool execution: searching knowledge base for "${query}"`);
+      this.logger.debug(
+        `Tool execution: searching knowledge base for "${query}"`,
+      );
 
       const results = await this.retrievalService.retrieve(query, {
         topK,
@@ -125,10 +151,10 @@ export class LlmService {
       });
 
       if (results.length === 0) {
-        this.logger.warn('Tool execution: no results found');
+        this.logger.warn("Tool execution: no results found");
         return {
-          status: 'no_results',
-          message: '知识库中没有找到相关信息。',
+          status: "no_results",
+          message: "知识库中没有找到相关信息。",
           results: [],
         };
       }
@@ -136,19 +162,19 @@ export class LlmService {
       this.logger.debug(`Tool execution: found ${results.length} results`);
 
       return {
-        status: 'success',
+        status: "success",
         message: `找到 ${results.length} 条相关信息`,
         results: results.map((r, idx) => ({
           index: idx + 1,
           content: r.content,
-          source: r.metadata?.document?.filename || '未知文档',
+          source: r.metadata?.document?.filename || "未知文档",
           score: r.score,
         })),
       };
     } catch (error) {
       this.logger.error(`Tool execution failed: ${error.message}`);
       return {
-        status: 'error',
+        status: "error",
         message: `知识库检索失败：${error.message}`,
         results: [],
       };
@@ -158,7 +184,7 @@ export class LlmService {
   buildToolCallingPrompt(): ChatMessage[] {
     return [
       {
-        role: 'system',
+        role: "system",
         content: `你是一个专业的知识库问答助手。
 
 工作流程：
@@ -185,12 +211,18 @@ export class LlmService {
       maxTokens?: number;
       topP?: number;
       enableToolCalling?: boolean;
-    } = {}
+    } = {},
   ): Promise<LLMResponse> {
-    const { temperature = 0.7, topP = 0.9, enableToolCalling = false } = options;
+    const {
+      temperature = 0.7,
+      topP = 0.9,
+      enableToolCalling = false,
+    } = options;
 
     try {
-      this.logger.debug(`Generating response with model: ${this.model}, toolCalling: ${enableToolCalling}`);
+      this.logger.debug(
+        `Generating response with model: ${this.model}, toolCalling: ${enableToolCalling}`,
+      );
 
       const toolCalls: ToolCallLog[] = [];
 
@@ -199,7 +231,9 @@ export class LlmService {
         messages,
         temperature,
         maxRetries: 3,
-        tools: enableToolCalling ? this.getKnowledgeBaseSearchTool() : undefined,
+        tools: enableToolCalling
+          ? this.getKnowledgeBaseSearchTool()
+          : undefined,
         maxSteps: enableToolCalling ? 3 : 1,
         onToolCall: enableToolCalling
           ? ({ toolCall, toolResult }) => {
@@ -216,11 +250,12 @@ export class LlmService {
 
       const usage = result.usage as any;
       const promptTokens = usage?.promptTokens || usage?.prompt_tokens || 0;
-      const completionTokens = usage?.completionTokens || usage?.completion_tokens || 0;
+      const completionTokens =
+        usage?.completionTokens || usage?.completion_tokens || 0;
       const totalTokens = promptTokens + completionTokens;
 
       this.logger.debug(
-        `Generated ${completionTokens} tokens, total: ${totalTokens}, toolCalls: ${toolCalls.length}`
+        `Generated ${completionTokens} tokens, total: ${totalTokens}, toolCalls: ${toolCalls.length}`,
       );
 
       return {
@@ -250,20 +285,28 @@ export class LlmService {
       maxTokens?: number;
       topP?: number;
       enableToolCalling?: boolean;
-    } = {}
+    } = {},
   ) {
-    const { temperature = 0.7, topP = 0.9, enableToolCalling = false } = options;
+    const {
+      temperature = 0.7,
+      topP = 0.9,
+      enableToolCalling = false,
+    } = options;
 
     try {
-      this.logger.debug(`Starting stream generation, toolCalling: ${enableToolCalling}`);
+      this.logger.debug(
+        `Starting stream generation, toolCalling: ${enableToolCalling}`,
+      );
 
       const result = streamText({
         model: this.openai(this.model),
         messages,
         temperature,
         maxRetries: 3,
-        tools: enableToolCalling ? this.getKnowledgeBaseSearchTool() : undefined,
-        maxSteps: enableToolCalling ? 3 : 1,
+        tools: enableToolCalling
+          ? this.getKnowledgeBaseSearchTool()
+          : undefined,
+        // maxSteps: enableToolCalling ? 3 : 1,
       });
 
       return result.textStream;
@@ -279,7 +322,7 @@ export class LlmService {
   buildRAGPrompt(
     question: string,
     contexts: string[],
-    systemPrompt?: string
+    systemPrompt?: string,
   ): ChatMessage[] {
     const defaultSystemPrompt = `你是一个专业的知识库问答助手。请基于提供的上下文信息回答用户问题。
 
@@ -291,7 +334,7 @@ export class LlmService {
 
     const contextText = contexts
       .map((ctx, index) => `[文档${index + 1}]\n${ctx}`)
-      .join('\n\n');
+      .join("\n\n");
 
     const userPrompt = `上下文信息：
 ${contextText}
@@ -302,11 +345,11 @@ ${contextText}
 
     return [
       {
-        role: 'system',
+        role: "system",
         content: systemPrompt || defaultSystemPrompt,
       },
       {
-        role: 'user',
+        role: "user",
         content: userPrompt,
       },
     ];
