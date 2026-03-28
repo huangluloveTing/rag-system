@@ -101,30 +101,22 @@ export class ChatService {
         this.logger.debug(`Created new session: ${session.id}`);
       }
 
-      // 2. 检索相关文档
-      // const retrievalResults = await this.retrievalService.retrieve(question, {
-      //   knowledgeBaseId: session.knowledgeBaseId || undefined,
-      // });
-
-      // this.logger.debug(`Retrieved ${retrievalResults.length} documents`);
-
-      // // 3. 构建上下文
-      // const contexts = retrievalResults.map((r) => r.content);
-
-      // 4. 获取历史消息
+      // 2. 获取历史消息
       const history = await this.getChatHistory(session.id);
 
-      // 5. 构建 Prompt
+      // 3. 构建 Prompt（使用 Tool Calling System Prompt）
       const messages: ChatMessage[] = [
-        ...history || [],
+        ...this.llmService.buildToolCallingPrompt(),
+        ...history.slice(-6),  // 保留最近 6 条历史
         { role: 'user', content: question }
-        // ...this.llmService.buildRAGPrompt(question, contexts),
       ];
 
-      // 6. 调用 LLM 生成答案
-      const llmResponse = await this.llmService.generate(messages);
+      // 4. 调用 LLM 生成答案（启用 Tool Calling）
+      const llmResponse = await this.llmService.generate(messages, {
+        enableToolCalling: true,
+      });
 
-      // 7. 保存用户消息
+      // 5. 保存用户消息
       await this.prisma.chatMessage.create({
         data: {
           sessionId: session.id,
@@ -133,48 +125,71 @@ export class ChatService {
         },
       });
 
-      // 8. 保存助手消息
+      // Transform tool results to match RetrievalResult structure for database storage
+      const referencesForDB = llmResponse.toolCalls
+        ? llmResponse.toolCalls.flatMap(tc =>
+            tc.toolResult.results.map(result => ({
+              chunkId: result.index.toString(), // Using index as chunkId
+              documentId: result.source || '',  // Using source as documentId
+              content: result.content,
+              score: result.score,
+              metadata: { source: result.source }
+            }))
+          )
+        : [];
+
+      // 6. 保存助手消息（包含 tool calling 元数据）
       await this.prisma.chatMessage.create({
         data: {
           sessionId: session.id,
           role: 'assistant',
           content: llmResponse.content,
-          // references: retrievalResults.map((r) => ({
-          //   chunkId: r.chunkId,
-          //   documentId: r.documentId,
-          //   content: r.content.substring(0, 200), // 只保存前 200 字符
-          //   score: r.score,
-          // })),
-          references: [],
+          toolCalls: llmResponse.toolCalls || null,
+          references: referencesForDB,
           latencyMs: Date.now() - startTime,
           tokensUsed: llmResponse.usage.total_tokens,
         },
       });
 
       this.logger.debug(
-        `Chat completed in ${Date.now() - startTime}ms, tokens: ${llmResponse.usage.total_tokens}`
+        `Chat completed in ${Date.now() - startTime}ms, tokens: ${llmResponse.usage.total_tokens}, toolCalls: ${llmResponse.toolCalls?.length || 0}`
       );
 
-      // 9. 记录检索日志
-      await this.prisma.retrievalLog.create({
-        data: {
-          question,
-          // retrievedDocs: retrievalResults.map((r) => ({
-          //   chunkId: r.chunkId,
-          //   documentId: r.documentId,
-          //   score: r.score,
-          // })),
-          retrievedDocs: [],
-          latencyMs: Date.now() - startTime,
-          userId,
-        },
-      });
+      // 7. 记录检索日志（如果有 tool calling）
+      if (llmResponse.toolCalls && llmResponse.toolCalls.length > 0) {
+        await this.prisma.retrievalLog.create({
+          data: {
+            question,
+            retrievedDocs: llmResponse.toolCalls.flatMap(tc =>
+              tc.toolResult.results.map(r => ({
+                chunkId: r.index.toString(), // Using index as chunkId
+                documentId: r.source || '',  // Using source as documentId
+                score: r.score,
+              }))
+            ),
+            latencyMs: Date.now() - startTime,
+            userId,
+          },
+        });
+      }
+
+      // Transform tool results to match RetrievalResult structure
+      const references = llmResponse.toolCalls
+        ? llmResponse.toolCalls.flatMap(tc =>
+            tc.toolResult.results.map(result => ({
+              chunkId: result.index.toString(), // Using index as chunkId
+              documentId: result.source || '',  // Using source as documentId
+              content: result.content,
+              score: result.score,
+              metadata: { source: result.source }
+            }))
+          )
+        : [];
 
       return {
         answer: llmResponse.content,
         sessionId: session.id,
-        // references: retrievalResults,
-        references: [],
+        references,
         usage: llmResponse.usage,
       };
     } catch (error) {
