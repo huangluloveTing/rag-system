@@ -214,12 +214,13 @@ pnpm prisma db seed
 |------|------|------|
 | POST | `/api/v1/auth/login` | 用户登录 |
 | POST | `/api/v1/auth/register` | 用户注册 |
-| POST | `/api/v1/chat` | 发送问题（非流式） |
-| POST | `/api/v1/chat/stream` | 发送问题（SSE 流式） |
-| POST | `/api/v1/documents/upload` | 上传文档 |
-| GET | `/api/v1/documents` | 文档列表 |
-| DELETE | `/api/v1/documents/:id` | 删除文档 |
+| POST | `/api/v1/chat` | 发送问题（非流式，支持 Tool Calling 智能检索） |
+| POST | `/api/v1/chat/stream` | 发送问题（SSE 流式，支持 Tool Calling 智能检索） |
 | POST | `/api/v1/feedback` | 提交反馈 |
+| GET | `/api/v1/knowledge-bases` | 获取知识库列表 |
+| POST | `/api/v1/knowledge-bases/:id/documents` | 上传文档到知识库 |
+| GET | `/api/v1/knowledge-bases/:id/documents` | 获取文档列表 |
+| DELETE | `/api/v1/documents/:id` | 删除文档 |
 
 ---
 
@@ -296,7 +297,38 @@ docker-compose -f docker-compose.prod.yml run --rm api pnpm prisma migrate deplo
 - [产品需求文档](./docs/001-rag-system-product-requirements.md)
 - [技术方案设计](./docs/002-rag-system-technical-design.md)
 - [部署指南](./docs/DEPLOYMENT.md)
+- [Knowledge Base Tool Calling 设计方案](./docs/superpowers/specs/2026-03-28-knowledge-base-tool-calling-design.md)
+- [Knowledge Base Tool Calling 实现计划](./docs/superpowers/plans/2026-03-28-knowledge-base-tool-calling.md)
 - [API 文档](http://localhost:3000/api/docs)
+
+---
+
+## 🤖 Tool Calling 智能检索
+
+系统采用基于 Tool Calling 的智能知识库检索功能：
+
+### 工作原理
+
+1. **智能判断**: LLM 自动判断问题是否需要检索知识库
+2. **Tool 调用**: 需要检索时自动调用 `knowledge_base_search` tool
+3. **结果增强**: 基于检索结果生成准确答案，并注明来源
+4. **降级处理**: 知识库无结果时使用 LLM 内置知识回答
+
+### 适用场景
+
+| 问题类型 | 行为 |
+|----------|------|
+| 知识库相关问题（如"报销流程"） | 调用 tool 检索知识库 |
+| 常识性问题（如"什么是 AI"） | 直接回答，不调用 tool |
+| 问候语（如"你好"） | 直接回答，不调用 tool |
+| 知识库无相关信息 | 明确告知用户，可能补充内置知识 |
+
+### 技术实现
+
+- **Vercel AI SDK**: `generateText` / `streamText` with `tools` parameter
+- **Zod**: Tool parameters schema 定义
+- **自动循环**: tool call → execute → continue generation
+- **元数据记录**: tool calling 记录保存到数据库
 
 ---
 
@@ -354,5 +386,5 @@ MIT License
 
 ---
 
-**开发团队**: 软件开发小组  
-**最后更新**: 2026-03-23
+**开发团队**: 软件开发小组
+**最后更新**: 2026-03-28

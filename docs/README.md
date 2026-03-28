@@ -12,6 +12,8 @@
 | 002 | RAG 系统技术方案设计 | Technical Design | 2026-03-23 | [002-rag-system-technical-design.md](./002-rag-system-technical-design.md) |
 | 003 | RAG 系统部署指南 | Deployment | 2026-03-23 | [DEPLOYMENT.md](./DEPLOYMENT.md) |
 | 004 | Qdrant 向量数据库配置 | Setup | 2026-03-23 | [QDRANT_SETUP.md](./QDRANT_SETUP.md) |
+| 005 | Knowledge Base Tool Calling 设计方案 | Technical Design | 2026-03-28 | [superpowers/specs/2026-03-28-knowledge-base-tool-calling-design.md](./superpowers/specs/2026-03-28-knowledge-base-tool-calling-design.md) |
+| 006 | Knowledge Base Tool Calling 实现计划 | Implementation Plan | 2026-03-28 | [superpowers/plans/2026-03-28-knowledge-base-tool-calling.md](./superpowers/plans/2026-03-28-knowledge-base-tool-calling.md) |
 
 ---
 
