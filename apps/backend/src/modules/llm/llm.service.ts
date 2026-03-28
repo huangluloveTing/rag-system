@@ -7,10 +7,33 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateText, streamText } from 'ai';
+import { z } from 'zod';
 
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
+}
+
+export interface ToolResult {
+  status: 'success' | 'no_results' | 'error';
+  message: string;
+  results: Array<{
+    index: number;
+    content: string;
+    source: string;
+    score: number;
+  }>;
+}
+
+export interface ToolCallLog {
+  toolName: string;
+  toolArgs: {
+    query: string;
+    topK: number;
+    similarityThreshold: number;
+  };
+  toolResult: ToolResult;
+  timestamp: Date;
 }
 
 export interface LLMResponse {
@@ -21,6 +44,7 @@ export interface LLMResponse {
     total_tokens: number;
   };
   model: string;
+  toolCalls?: ToolCallLog[];
 }
 
 @Injectable()
