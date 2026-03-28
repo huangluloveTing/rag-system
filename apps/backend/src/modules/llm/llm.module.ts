@@ -5,8 +5,10 @@
 
 import { Module } from '@nestjs/common';
 import { LlmService } from './llm.service';
+import { RetrievalModule } from '../retrieval/retrieval.module';
 
 @Module({
+  imports: [RetrievalModule],
   providers: [LlmService],
   exports: [LlmService],
 })

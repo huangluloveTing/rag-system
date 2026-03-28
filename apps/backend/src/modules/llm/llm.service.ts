@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateText, streamText } from 'ai';
 import { z } from 'zod';
+import { RetrievalService } from '../retrieval/retrieval.service';
 
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -53,7 +54,10 @@ export class LlmService {
   private readonly model: string;
   private readonly openai: ReturnType<typeof createOpenAI>;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private retrievalService: RetrievalService
+  ) {
     const apiKey = this.configService.get<string>(
       'LLM_API_KEY',
       'sk-your-api-key-here'
@@ -71,6 +75,104 @@ export class LlmService {
     });
 
     this.logger.log(`LLM Service initialized with model: ${this.model}`);
+  }
+
+  getKnowledgeBaseSearchTool() {
+    return {
+      knowledge_base_search: {
+        description: `搜索知识库以获取与用户问题相关的文档内容。
+
+适用场景：
+- 用户询问特定领域的专业知识、技术细节
+- 涉及公司政策、流程规范、产品特性等
+- 需要引用文档来源、数据支持的问题
+
+不适用场景：
+- 简单问候、闲聊
+- 通用常识问题
+- 明确要求不使用知识库的问题`,
+
+        parameters: z.object({
+          query: z.string().describe('搜索查询文本，建议提取问题的关键词或核心表述'),
+          topK: z.number().min(1).max(10).default(5).describe('返回结果数量，建议 3-5'),
+          similarityThreshold: z.number().min(0).max(1).default(0.3).describe('相似度阈值，建议 0.3-0.5，越高要求越严格'),
+        }),
+
+        execute: async ({ query, topK, similarityThreshold }: {
+          query: string;
+          topK: number;
+          similarityThreshold: number;
+        }): Promise<ToolResult> => {
+          return await this.executeKnowledgeBaseSearch(query, topK, similarityThreshold);
+        },
+      },
+    };
+  }
+
+  private async executeKnowledgeBaseSearch(
+    query: string,
+    topK: number,
+    similarityThreshold: number
+  ): Promise<ToolResult> {
+    try {
+      this.logger.debug(`Tool execution: searching knowledge base for "${query}"`);
+
+      const results = await this.retrievalService.retrieve(query, {
+        topK,
+        similarityThreshold,
+        enableRerank: true,
+        knowledgeBaseId: undefined,
+      });
+
+      if (results.length === 0) {
+        this.logger.warn('Tool execution: no results found');
+        return {
+          status: 'no_results',
+          message: '知识库中没有找到相关信息。',
+          results: [],
+        };
+      }
+
+      this.logger.debug(`Tool execution: found ${results.length} results`);
+
+      return {
+        status: 'success',
+        message: `找到 ${results.length} 条相关信息`,
+        results: results.map((r, idx) => ({
+          index: idx + 1,
+          content: r.content,
+          source: r.metadata?.document?.filename || '未知文档',
+          score: r.score,
+        })),
+      };
+    } catch (error) {
+      this.logger.error(`Tool execution failed: ${error.message}`);
+      return {
+        status: 'error',
+        message: `知识库检索失败：${error.message}`,
+        results: [],
+      };
+    }
+  }
+
+  buildToolCallingPrompt(): ChatMessage[] {
+    return [
+      {
+        role: 'system',
+        content: `你是一个专业的知识库问答助手。
+
+工作流程：
+1. 当用户提问时，优先使用 knowledge_base_search 工具搜索知识库
+2. 如果找到相关信息，基于检索结果准确回答，并注明来源
+3. 如果知识库中没有相关信息，或用户问题不需要知识库（如问候、常识），可直接回答
+
+回答原则：
+- 准确：基于事实和数据，不编造信息
+- 清晰：简洁有条理，避免冗余
+- 来源透明：引用知识库内容时注明来源
+- 诚实：知识库无相关信息时，明确告知并说明原因`,
+      },
+    ];
   }
 
   /**
