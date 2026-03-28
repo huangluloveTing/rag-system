@@ -184,28 +184,43 @@ export class LlmService {
       temperature?: number;
       maxTokens?: number;
       topP?: number;
+      enableToolCalling?: boolean;
     } = {}
   ): Promise<LLMResponse> {
-    const { temperature = 0.7, topP = 0.9 } = options;
+    const { temperature = 0.7, topP = 0.9, enableToolCalling = false } = options;
 
     try {
-      this.logger.debug(`Generating response with model: ${this.model}`);
+      this.logger.debug(`Generating response with model: ${this.model}, toolCalling: ${enableToolCalling}`);
+
+      const toolCalls: ToolCallLog[] = [];
 
       const result = await generateText({
         model: this.openai(this.model),
         messages,
         temperature,
         maxRetries: 3,
+        tools: enableToolCalling ? this.getKnowledgeBaseSearchTool() : undefined,
+        maxSteps: enableToolCalling ? 3 : 1,
+        onToolCall: enableToolCalling
+          ? ({ toolCall, toolResult }) => {
+              this.logger.debug(`Tool called: ${toolCall.toolName}`);
+              toolCalls.push({
+                toolName: toolCall.toolName,
+                toolArgs: toolCall.args as any,
+                toolResult: toolResult as ToolResult,
+                timestamp: new Date(),
+              });
+            }
+          : undefined,
       });
 
-      // 获取 token 使用情况
       const usage = result.usage as any;
       const promptTokens = usage?.promptTokens || usage?.prompt_tokens || 0;
       const completionTokens = usage?.completionTokens || usage?.completion_tokens || 0;
       const totalTokens = promptTokens + completionTokens;
 
       this.logger.debug(
-        `Generated ${completionTokens} tokens, total: ${totalTokens}`
+        `Generated ${completionTokens} tokens, total: ${totalTokens}, toolCalls: ${toolCalls.length}`
       );
 
       return {
@@ -216,6 +231,7 @@ export class LlmService {
           total_tokens: totalTokens,
         },
         model: this.model,
+        toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
       };
     } catch (error) {
       this.logger.error(`LLM generation failed: ${error.message}`);
@@ -233,18 +249,21 @@ export class LlmService {
       temperature?: number;
       maxTokens?: number;
       topP?: number;
+      enableToolCalling?: boolean;
     } = {}
   ) {
-    const { temperature = 0.7, topP = 0.9 } = options;
+    const { temperature = 0.7, topP = 0.9, enableToolCalling = false } = options;
 
     try {
-      this.logger.debug(`Starting stream generation with model: ${this.model}`);
+      this.logger.debug(`Starting stream generation, toolCalling: ${enableToolCalling}`);
 
       const result = streamText({
         model: this.openai(this.model),
         messages,
         temperature,
         maxRetries: 3,
+        tools: enableToolCalling ? this.getKnowledgeBaseSearchTool() : undefined,
+        maxSteps: enableToolCalling ? 3 : 1,
       });
 
       return result.textStream;
