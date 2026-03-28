@@ -198,10 +198,6 @@ export class ChatService {
     }
   }
 
-  /**
-   * 流式聊天
-   * 返回 AsyncIterable<string>
-   */
   async *chatStream(
     request: ChatRequest,
     userId: string
@@ -229,24 +225,17 @@ export class ChatService {
         });
       }
 
-      // 2. 检索文档
-      const retrievalResults = await this.retrievalService.retrieve(question, {
-        knowledgeBaseId: session.knowledgeBaseId || undefined,
-      });
-
-      // 3. 构建上下文
-      const contexts = retrievalResults.map((r) => r.content);
-
-      // 4. 获取历史
+      // 2. 获取历史消息
       const history = await this.getChatHistory(session.id);
 
-      // 5. 构建 Prompt
+      // 3. 构建 Prompt（使用 Tool Calling System Prompt）
       const messages: ChatMessage[] = [
+        ...this.llmService.buildToolCallingPrompt(),
         ...history.slice(-6),
-        ...this.llmService.buildRAGPrompt(question, contexts),
+        { role: 'user', content: question }
       ];
 
-      // 6. 保存用户消息
+      // 4. 保存用户消息
       await this.prisma.chatMessage.create({
         data: {
           sessionId: session.id,
@@ -255,8 +244,10 @@ export class ChatService {
         },
       });
 
-      // 7. 流式生成答案
-      const stream = await this.llmService.generateStream(messages);
+      // 5. 流式生成答案（启用 Tool Calling）
+      const stream = await this.llmService.generateStream(messages, {
+        enableToolCalling: true,
+      });
       let fullContent = '';
 
       for await (const chunk of stream) {
@@ -264,18 +255,14 @@ export class ChatService {
         yield chunk;
       }
 
-      // 8. 保存助手消息
+      // 6. 保存助手消息（流式模式无法获取 tool calling 元数据）
       await this.prisma.chatMessage.create({
         data: {
           sessionId: session.id,
           role: 'assistant',
           content: fullContent,
-          references: retrievalResults.map((r) => ({
-            chunkId: r.chunkId,
-            documentId: r.documentId,
-            content: r.content.substring(0, 200),
-            score: r.score,
-          })),
+          toolCalls: null,  // 流式模式暂时无法记录 tool calls
+          references: null,
           latencyMs: Date.now() - startTime,
         },
       });
