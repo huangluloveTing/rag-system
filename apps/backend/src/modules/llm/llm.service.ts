@@ -286,7 +286,7 @@ export class LlmService {
 
   /**
    * 流式生成文本
-   * 返回 AsyncIterableStream
+   * 返回 UI Message Stream Response
    */
   async generateStream(
     messages: ChatMessage[],
@@ -296,9 +296,10 @@ export class LlmService {
       topP?: number;
       enableToolCalling?: boolean;
     } = {},
-  ) {
+  ): Promise<Response> {
     const {
       temperature = 0.7,
+      maxTokens,
       topP = 0.9,
       enableToolCalling = false,
     } = options;
@@ -313,13 +314,15 @@ export class LlmService {
         messages,
         temperature,
         maxRetries: 3,
+        ...(maxTokens && { maxTokens }),
+        ...(enableToolCalling ? { maxSteps: 5 } : {}), // Enable up to 5 tool calling steps when tool calling is enabled
         tools: enableToolCalling
           ? this.getKnowledgeBaseSearchTool()
           : undefined,
-        // maxSteps: enableToolCalling ? 3 : 1,
       });
 
-      return result.textStream;
+      // Return standard UI Message Stream Response
+      return result.toUIMessageStreamResponse();
     } catch (error) {
       this.logger.error(`Stream generation failed: ${error.message}`);
       throw new Error(`Stream generation failed: ${error.message}`);
