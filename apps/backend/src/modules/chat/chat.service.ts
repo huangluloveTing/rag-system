@@ -20,11 +20,30 @@ export interface ChatResponse {
   answer: string;
   sessionId: string;
   references: RetrievalResult[];
+  citations?: Citation[]; // 引用标注
+  thinking?: ThinkingInfo; // 思考过程信息
   usage?: {
     prompt_tokens: number;
     completion_tokens: number;
     total_tokens: number;
   };
+}
+
+export interface Citation {
+  index: number;
+  chunkId: string;
+  documentId: string;
+  content: string;
+  source: string; // 文件名
+  score: number;
+}
+
+export interface ThinkingInfo {
+  usedToolCalling: boolean;
+  searchQuery?: string;
+  resultCount?: number;
+  topScore?: number;
+  message?: string; // 如"基于通用知识回答"
 }
 
 // OpenAI Chat Completion API 响应类型
@@ -107,7 +126,7 @@ export class ChatService {
       // 3. 构建 Prompt（使用 Tool Calling System Prompt）
       const messages: ChatMessage[] = [
         ...this.llmService.buildToolCallingPrompt(),
-        ...history.slice(-6),  // 保留最近 6 条历史
+        ...history.slice(-12),  // 保留最近 12 条历史（从 6 条扩展到 12 条）
         { role: 'user', content: question }
       ];
 
@@ -144,8 +163,8 @@ export class ChatService {
           sessionId: session.id,
           role: 'assistant',
           content: llmResponse.content,
-          toolCalls: llmResponse.toolCalls || null,
-          references: referencesForDB,
+          toolCalls: llmResponse.toolCalls ? { toJSON: () => llmResponse.toolCalls } as any : undefined,
+          references: referencesForDB.length > 0 ? { toJSON: () => referencesForDB } as any : undefined,
           latencyMs: Date.now() - startTime,
           tokensUsed: llmResponse.usage.total_tokens,
         },
@@ -186,10 +205,35 @@ export class ChatService {
           )
         : [];
 
+      // Build citations for frontend display
+      const citations: Citation[] = references.map((r, idx) => ({
+        index: idx + 1,
+        chunkId: r.chunkId,
+        documentId: r.documentId,
+        content: r.content,
+        source: (r.metadata?.source as string) || '未知文档',
+        score: r.score,
+      }));
+
+      // Build thinking info
+      const thinking: ThinkingInfo = llmResponse.toolCalls && llmResponse.toolCalls.length > 0
+        ? {
+            usedToolCalling: true,
+            searchQuery: llmResponse.toolCalls[0]?.toolArgs?.query || question,
+            resultCount: references.length,
+            topScore: references.length > 0 ? references[0].score : 0,
+          }
+        : {
+            usedToolCalling: false,
+            message: '基于通用知识回答',
+          };
+
       return {
         answer: llmResponse.content,
         sessionId: session.id,
         references,
+        citations,
+        thinking,
         usage: llmResponse.usage,
       };
     } catch (error) {
@@ -231,7 +275,7 @@ export class ChatService {
       // 3. 构建 Prompt（使用 Tool Calling System Prompt）
       const messages: ChatMessage[] = [
         ...this.llmService.buildToolCallingPrompt(),
-        ...history.slice(-6),
+        ...history.slice(-12),  // 保留最近 12 条历史
         { role: 'user', content: question }
       ];
 
@@ -261,8 +305,8 @@ export class ChatService {
           sessionId: session.id,
           role: 'assistant',
           content: fullContent,
-          toolCalls: null,  // 流式模式暂时无法记录 tool calls
-          references: null,
+          toolCalls: undefined,
+          references: undefined,
           latencyMs: Date.now() - startTime,
         },
       });

@@ -1,0 +1,41 @@
+/**
+ * FeedbackForm 组件样式
+ */
+.feedback-form-modal .ant-modal-body {
+  padding: 24px;
+}
+
+.feedback-form-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.feedback-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.feedback-form-label {
+  font-weight: 500;
+  color: #333;
+}
+
+.feedback-form-rate {
+  font-size: 24px;
+}
+
+.feedback-form-rate .ant-rate-star {
+  color: #52c41a;
+}
+
+.feedback-form-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.feedback-form-tags .ant-checkbox-wrapper {
+  font-size: 14px;
+}

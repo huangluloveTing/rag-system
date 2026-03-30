@@ -112,7 +112,7 @@ export class LlmService {
             .max(1)
             .default(0.3)
             .describe("相似度阈值，建议 0.3-0.5，越高要求越严格"),
-        }),
+        }) as any, // 类型断言以避免 Zod 类型过深问题
 
         execute: async ({
           query,
@@ -195,8 +195,17 @@ export class LlmService {
 回答原则：
 - 准确：基于事实和数据，不编造信息
 - 清晰：简洁有条理，避免冗余
-- 来源透明：引用知识库内容时注明来源
-- 诚实：知识库无相关信息时，明确告知并说明原因`,
+- 来源透明：引用知识库内容时，在句末添加引用标记，格式为 [1]、[2]、[3] 等，按引用出现顺序编号
+- 诚实：知识库无相关信息时，明确告知并说明原因
+
+引用标记使用示例：
+- "公司的报销流程需要提交发票和申请表 [1]。审批通常需要 3-5 个工作日 [2]。"
+- 如果引用多个来源，分别标注："...需要提交发票 [1][2]。审批流程如下 [3]。"
+
+注意：
+- 只有在引用知识库内容时才添加引用标记
+- 引用标记放在标点符号之前
+- 每个引用标记对应一个具体的文档来源`,
       },
     ];
   }
@@ -234,18 +243,19 @@ export class LlmService {
         tools: enableToolCalling
           ? this.getKnowledgeBaseSearchTool()
           : undefined,
-        maxSteps: enableToolCalling ? 3 : 1,
-        onToolCall: enableToolCalling
-          ? ({ toolCall, toolResult }) => {
-              this.logger.debug(`Tool called: ${toolCall.toolName}`);
-              toolCalls.push({
-                toolName: toolCall.toolName,
-                toolArgs: toolCall.args as any,
-                toolResult: toolResult as ToolResult,
-                timestamp: new Date(),
-              });
-            }
-          : undefined,
+        // maxSteps 和 onToolCall 暂时禁用，等待 SDK 更新
+        // maxSteps: enableToolCalling ? 3 : 1,
+        // onToolCall: enableToolCalling
+        //   ? ({ toolCall, toolResult }) => {
+        //       this.logger.debug(`Tool called: ${toolCall.toolName}`);
+        //       toolCalls.push({
+        //         toolName: toolCall.toolName,
+        //         toolArgs: toolCall.args as any,
+        //         toolResult: toolResult as ToolResult,
+        //         timestamp: new Date(),
+        //       });
+        //     }
+        //   : undefined,
       });
 
       const usage = result.usage as any;

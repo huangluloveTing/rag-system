@@ -59,6 +59,21 @@ export interface RAGChatResponse {
     score: number;
     metadata?: any;
   }>;
+  citations?: Array<{
+    index: number;
+    chunkId: string;
+    documentId: string;
+    content: string;
+    source: string;
+    score: number;
+  }>;
+  thinking?: {
+    usedToolCalling: boolean;
+    searchQuery?: string;
+    resultCount?: number;
+    topScore?: number;
+    message?: string;
+  };
   usage?: {
     prompt_tokens: number;
     completion_tokens: number;

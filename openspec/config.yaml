@@ -1,0 +1,112 @@
+schema: spec-driven
+
+# Project context
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+context: |
+  ## 项目概述
+  RAG（检索增强生成）智能知识库问答系统 - 企业级 Monorepo 架构项目
+
+  ## 技术栈
+  - **Monorepo 管理**: pnpm workspace
+  - **后端**: NestJS 10 + TypeScript + Prisma ORM
+  - **前端**: React 18 + Vite + TypeScript + Ant Design 5
+  - **Embedding 服务**: TypeScript + @xenova/transformers
+  - **数据库**: PostgreSQL 15
+  - **向量数据库**: Milvus 2.4
+  - **缓存/队列**: Redis 7 + Bull
+  - **对象存储**: MinIO
+  - **LLM**: 通义千问 Qwen3.5-plus (通过 Vercel AI SDK)
+
+  ## 项目结构
+  ```
+  rag-system/
+  ├── apps/
+  │   ├── backend/          # NestJS 后端 API (端口 3000)
+  │   ├── frontend/         # React 前端 (端口 5173)
+  │   └── embedding/        # Embedding 微服务 (端口 8001)
+  ├── docs/                 # 项目文档
+  ├── openspec/             # OpenSpec 配置和变更
+  ├── docker-compose.yml    # 应用服务部署
+  └── docker-compose.infra.yml  # 基础设施部署
+  ```
+
+  ## 编码规范
+  - **语言**: TypeScript (严格模式)
+  - **提交规范**: Conventional Commits (feat/fix/refactor/docs/test/chore)
+  - **代码风格**:
+    - 不可变数据模式 (使用 spread operator)
+    - 错误处理：try-catch + 用户友好错误消息
+    - 输入验证：使用 class-validator (后端) / Zod (可选)
+    - 禁止 console.log (使用 NestJS 日志系统)
+  - **API 响应格式**: 统一 envelope (success/data/error/meta)
+  - **测试覆盖率**: 最低 80% (单元 + 集成 + E2E)
+
+  ## 核心功能模块
+  - 用户认证 (JWT + Passport)
+  - 知识库管理 (CRUD + 文档上传)
+  - 智能检索 (基于 Tool Calling)
+  - 聊天问答 (支持流式 SSE)
+  - 文档处理 (PDF/Word/Markdown 解析)
+  - 向量嵌入 (BGE-Large-ZH-v1.5)
+  - 结果重排序 (BGE-Reranker-Large)
+
+  ## 开发命令
+  ```bash
+  pnpm dev              # 启动所有服务 (并行)
+  pnpm dev:backend      # 仅启动后端
+  pnpm dev:frontend     # 仅启动前端
+  pnpm docker:infra     # 启动基础设施
+  pnpm db:migrate       # 数据库迁移
+  pnpm db:seed          # 种子数据
+  ```
+
+  ## API 端点
+  - 后端 API: http://localhost:3000
+  - API 文档：http://localhost:3000/api/docs
+  - 前端：http://localhost:5173
+  - Embedding 服务：http://localhost:8001/health
+
+  ## 默认账号
+  - 用户名：admin
+  - 密码：admin123
+  - 角色：admin
+
+# Per-artifact rules
+# Add custom rules for specific artifacts.
+rules:
+  proposal:
+    - 保持提案简洁，不超过 1000 字
+    - 必须包含"非目标"章节
+    - 技术方案需考虑现有架构兼容性
+    - 涉及数据库变更需说明迁移策略
+
+  tasks:
+    - 任务粒度控制在 2-4 小时内
+    - 每个任务必须是可独立验证的
+    - 后端任务需包含测试要求
+    - 前端任务需考虑响应式设计
+
+  spec:
+    - 使用 TypeScript 类型定义接口
+    - 包含 API 请求/响应示例
+    - 说明错误处理策略
+    - 标注性能要求（如响应时间）
+
+  implementation:
+    - 遵循不可变数据模式
+    - 所有外部输入必须验证
+    - 错误必须记录日志并返回用户友好消息
+    - 禁止硬编码配置（使用环境变量）
+    - 新代码必须通过 TypeScript 严格检查
+
+# Default artifact generation settings (optional)
+defaults:
+  # Default language for generated artifacts
+  language: zh-CN
+
+  # Default test framework suggestions
+  test_framework:
+    backend: jest
+    frontend: vitest
+    e2e: playwright

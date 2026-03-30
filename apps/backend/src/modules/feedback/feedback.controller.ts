@@ -8,10 +8,13 @@ import {
   Post,
   Get,
   Delete,
+  Patch,
   Body,
   Param,
   Query,
   UseGuards,
+  Res,
+  Headers,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -21,7 +24,8 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { FeedbackService, CreateFeedbackDto } from './feedback.service';
+import { FeedbackService, CreateFeedbackDto, UpdateFeedbackDto } from './feedback.service';
+import { Response } from 'express';
 
 @ApiTags('feedback')
 @ApiBearerAuth()
@@ -74,5 +78,72 @@ export class FeedbackController {
   ) {
     await this.feedbackService.deleteFeedback(feedbackId, user.userId);
     return { message: '反馈已删除' };
+  }
+
+  // 管理员接口
+  @Get('admin/all')
+  @ApiOperation({ summary: '获取所有反馈列表（管理员）' })
+  @ApiResponse({ status: 200, description: '返回所有反馈列表' })
+  async getAllFeedbacks(
+    @CurrentUser() user: any,
+    @Query('page') page: string = '1',
+    @Query('pageSize') pageSize: string = '20',
+    @Query('status') status?: string,
+    @Query('rating') rating?: number,
+    @Query('knowledgeBaseId') knowledgeBaseId?: string
+  ) {
+    // TODO: 添加管理员权限校验
+    return this.feedbackService.getAllFeedbacks(
+      parseInt(page, 10),
+      parseInt(pageSize, 10),
+      { status, rating, knowledgeBaseId }
+    );
+  }
+
+  @Get('admin/:feedbackId')
+  @ApiOperation({ summary: '获取反馈详情（管理员）' })
+  async getFeedbackDetail(@Param('feedbackId') feedbackId: string) {
+    return this.feedbackService.getFeedbackDetail(feedbackId);
+  }
+
+  @Patch('admin/:feedbackId/status')
+  @ApiOperation({ summary: '更新反馈状态（管理员）' })
+  async updateFeedbackStatus(
+    @Param('feedbackId') feedbackId: string,
+    @Body() data: UpdateFeedbackDto,
+    @CurrentUser() user: any
+  ) {
+    return this.feedbackService.updateFeedbackStatus(
+      feedbackId,
+      data.status || 'pending',
+      user.userId
+    );
+  }
+
+  @Get('admin/export/csv')
+  @ApiOperation({ summary: '导出反馈为 CSV（管理员）' })
+  @ApiResponse({ status: 200, description: '返回 CSV 文件' })
+  async exportCsv(
+    @Res() res: Response,
+    @Headers('user-agent') ua: string
+  ) {
+    const csv = await this.feedbackService.exportFeedbacksToCsv();
+
+    const isIE = ua.indexOf('MSIE') !== -1 || ua.indexOf('Trident') !== -1;
+    const fileName = 'feedback-export.csv';
+
+    res.set({
+      'Content-Type': 'text/csv',
+      'Content-Disposition': `attachment; filename="${fileName}"`,
+      'Content-Length': csv.length,
+    });
+
+    if (isIE) {
+      res.set('Cache-Control', 'public, no-cache, no-store');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+    }
+
+    res.send(csv);
   }
 }

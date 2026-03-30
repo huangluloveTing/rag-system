@@ -1,0 +1,48 @@
+/**
+ * CitationPanel 组件样式
+ */
+.citation-panel .ant-drawer-body {
+  padding: 16px;
+}
+
+.citation-panel-empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+.citation-panel-item {
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  padding: 12px 0 !important;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.citation-panel-item:last-child {
+  border-bottom: none;
+}
+
+.citation-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.citation-panel-source {
+  font-size: 14px;
+}
+
+.citation-panel-score {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+  margin-bottom: 8px;
+}
+
+.citation-panel-content {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #666;
+  margin: 0;
+}

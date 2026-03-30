@@ -38,6 +38,9 @@ export type FeedbackMinAggregateOutputType = {
   id: string | null
   rating: number | null
   comment: string | null
+  status: string | null
+  resolvedAt: Date | null
+  resolvedBy: string | null
   createdAt: Date | null
   chatMessageId: string | null
   userId: string | null
@@ -47,6 +50,9 @@ export type FeedbackMaxAggregateOutputType = {
   id: string | null
   rating: number | null
   comment: string | null
+  status: string | null
+  resolvedAt: Date | null
+  resolvedBy: string | null
   createdAt: Date | null
   chatMessageId: string | null
   userId: string | null
@@ -56,6 +62,10 @@ export type FeedbackCountAggregateOutputType = {
   id: number
   rating: number
   comment: number
+  tags: number
+  status: number
+  resolvedAt: number
+  resolvedBy: number
   createdAt: number
   chatMessageId: number
   userId: number
@@ -75,6 +85,9 @@ export type FeedbackMinAggregateInputType = {
   id?: true
   rating?: true
   comment?: true
+  status?: true
+  resolvedAt?: true
+  resolvedBy?: true
   createdAt?: true
   chatMessageId?: true
   userId?: true
@@ -84,6 +97,9 @@ export type FeedbackMaxAggregateInputType = {
   id?: true
   rating?: true
   comment?: true
+  status?: true
+  resolvedAt?: true
+  resolvedBy?: true
   createdAt?: true
   chatMessageId?: true
   userId?: true
@@ -93,6 +109,10 @@ export type FeedbackCountAggregateInputType = {
   id?: true
   rating?: true
   comment?: true
+  tags?: true
+  status?: true
+  resolvedAt?: true
+  resolvedBy?: true
   createdAt?: true
   chatMessageId?: true
   userId?: true
@@ -189,6 +209,10 @@ export type FeedbackGroupByOutputType = {
   id: string
   rating: number
   comment: string | null
+  tags: string[]
+  status: string
+  resolvedAt: Date | null
+  resolvedBy: string | null
   createdAt: Date
   chatMessageId: string
   userId: string
@@ -221,6 +245,10 @@ export type FeedbackWhereInput = {
   id?: Prisma.UuidFilter<"Feedback"> | string
   rating?: Prisma.IntFilter<"Feedback"> | number
   comment?: Prisma.StringNullableFilter<"Feedback"> | string | null
+  tags?: Prisma.StringNullableListFilter<"Feedback">
+  status?: Prisma.StringFilter<"Feedback"> | string
+  resolvedAt?: Prisma.DateTimeNullableFilter<"Feedback"> | Date | string | null
+  resolvedBy?: Prisma.UuidNullableFilter<"Feedback"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   chatMessageId?: Prisma.UuidFilter<"Feedback"> | string
   userId?: Prisma.UuidFilter<"Feedback"> | string
@@ -232,6 +260,10 @@ export type FeedbackOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   comment?: Prisma.SortOrderInput | Prisma.SortOrder
+  tags?: Prisma.SortOrder
+  status?: Prisma.SortOrder
+  resolvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  resolvedBy?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   chatMessageId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
@@ -246,6 +278,10 @@ export type FeedbackWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.FeedbackWhereInput | Prisma.FeedbackWhereInput[]
   rating?: Prisma.IntFilter<"Feedback"> | number
   comment?: Prisma.StringNullableFilter<"Feedback"> | string | null
+  tags?: Prisma.StringNullableListFilter<"Feedback">
+  status?: Prisma.StringFilter<"Feedback"> | string
+  resolvedAt?: Prisma.DateTimeNullableFilter<"Feedback"> | Date | string | null
+  resolvedBy?: Prisma.UuidNullableFilter<"Feedback"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   chatMessageId?: Prisma.UuidFilter<"Feedback"> | string
   userId?: Prisma.UuidFilter<"Feedback"> | string
@@ -257,6 +293,10 @@ export type FeedbackOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   comment?: Prisma.SortOrderInput | Prisma.SortOrder
+  tags?: Prisma.SortOrder
+  status?: Prisma.SortOrder
+  resolvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  resolvedBy?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   chatMessageId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
@@ -274,6 +314,10 @@ export type FeedbackScalarWhereWithAggregatesInput = {
   id?: Prisma.UuidWithAggregatesFilter<"Feedback"> | string
   rating?: Prisma.IntWithAggregatesFilter<"Feedback"> | number
   comment?: Prisma.StringNullableWithAggregatesFilter<"Feedback"> | string | null
+  tags?: Prisma.StringNullableListFilter<"Feedback">
+  status?: Prisma.StringWithAggregatesFilter<"Feedback"> | string
+  resolvedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Feedback"> | Date | string | null
+  resolvedBy?: Prisma.UuidNullableWithAggregatesFilter<"Feedback"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Feedback"> | Date | string
   chatMessageId?: Prisma.UuidWithAggregatesFilter<"Feedback"> | string
   userId?: Prisma.UuidWithAggregatesFilter<"Feedback"> | string
@@ -283,6 +327,10 @@ export type FeedbackCreateInput = {
   id?: string
   rating: number
   comment?: string | null
+  tags?: Prisma.FeedbackCreatetagsInput | string[]
+  status?: string
+  resolvedAt?: Date | string | null
+  resolvedBy?: string | null
   createdAt?: Date | string
   chatMessage: Prisma.ChatMessageCreateNestedOneWithoutFeedbacksInput
   user: Prisma.UserCreateNestedOneWithoutFeedbacksInput
@@ -292,6 +340,10 @@ export type FeedbackUncheckedCreateInput = {
   id?: string
   rating: number
   comment?: string | null
+  tags?: Prisma.FeedbackCreatetagsInput | string[]
+  status?: string
+  resolvedAt?: Date | string | null
+  resolvedBy?: string | null
   createdAt?: Date | string
   chatMessageId: string
   userId: string
@@ -301,6 +353,10 @@ export type FeedbackUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tags?: Prisma.FeedbackUpdatetagsInput | string[]
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resolvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chatMessage?: Prisma.ChatMessageUpdateOneRequiredWithoutFeedbacksNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutFeedbacksNestedInput
@@ -310,6 +366,10 @@ export type FeedbackUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tags?: Prisma.FeedbackUpdatetagsInput | string[]
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resolvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chatMessageId?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -319,6 +379,10 @@ export type FeedbackCreateManyInput = {
   id?: string
   rating: number
   comment?: string | null
+  tags?: Prisma.FeedbackCreatetagsInput | string[]
+  status?: string
+  resolvedAt?: Date | string | null
+  resolvedBy?: string | null
   createdAt?: Date | string
   chatMessageId: string
   userId: string
@@ -328,6 +392,10 @@ export type FeedbackUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tags?: Prisma.FeedbackUpdatetagsInput | string[]
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resolvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -335,6 +403,10 @@ export type FeedbackUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tags?: Prisma.FeedbackUpdatetagsInput | string[]
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resolvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chatMessageId?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -354,6 +426,10 @@ export type FeedbackCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   comment?: Prisma.SortOrder
+  tags?: Prisma.SortOrder
+  status?: Prisma.SortOrder
+  resolvedAt?: Prisma.SortOrder
+  resolvedBy?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   chatMessageId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
@@ -367,6 +443,9 @@ export type FeedbackMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   comment?: Prisma.SortOrder
+  status?: Prisma.SortOrder
+  resolvedAt?: Prisma.SortOrder
+  resolvedBy?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   chatMessageId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
@@ -376,6 +455,9 @@ export type FeedbackMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   comment?: Prisma.SortOrder
+  status?: Prisma.SortOrder
+  resolvedAt?: Prisma.SortOrder
+  resolvedBy?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   chatMessageId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
@@ -469,10 +551,27 @@ export type FeedbackUncheckedUpdateManyWithoutChatMessageNestedInput = {
   deleteMany?: Prisma.FeedbackScalarWhereInput | Prisma.FeedbackScalarWhereInput[]
 }
 
+export type FeedbackCreatetagsInput = {
+  set: string[]
+}
+
+export type FeedbackUpdatetagsInput = {
+  set?: string[]
+  push?: string | string[]
+}
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
+}
+
 export type FeedbackCreateWithoutUserInput = {
   id?: string
   rating: number
   comment?: string | null
+  tags?: Prisma.FeedbackCreatetagsInput | string[]
+  status?: string
+  resolvedAt?: Date | string | null
+  resolvedBy?: string | null
   createdAt?: Date | string
   chatMessage: Prisma.ChatMessageCreateNestedOneWithoutFeedbacksInput
 }
@@ -481,6 +580,10 @@ export type FeedbackUncheckedCreateWithoutUserInput = {
   id?: string
   rating: number
   comment?: string | null
+  tags?: Prisma.FeedbackCreatetagsInput | string[]
+  status?: string
+  resolvedAt?: Date | string | null
+  resolvedBy?: string | null
   createdAt?: Date | string
   chatMessageId: string
 }
@@ -518,6 +621,10 @@ export type FeedbackScalarWhereInput = {
   id?: Prisma.UuidFilter<"Feedback"> | string
   rating?: Prisma.IntFilter<"Feedback"> | number
   comment?: Prisma.StringNullableFilter<"Feedback"> | string | null
+  tags?: Prisma.StringNullableListFilter<"Feedback">
+  status?: Prisma.StringFilter<"Feedback"> | string
+  resolvedAt?: Prisma.DateTimeNullableFilter<"Feedback"> | Date | string | null
+  resolvedBy?: Prisma.UuidNullableFilter<"Feedback"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   chatMessageId?: Prisma.UuidFilter<"Feedback"> | string
   userId?: Prisma.UuidFilter<"Feedback"> | string
@@ -527,6 +634,10 @@ export type FeedbackCreateWithoutChatMessageInput = {
   id?: string
   rating: number
   comment?: string | null
+  tags?: Prisma.FeedbackCreatetagsInput | string[]
+  status?: string
+  resolvedAt?: Date | string | null
+  resolvedBy?: string | null
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutFeedbacksInput
 }
@@ -535,6 +646,10 @@ export type FeedbackUncheckedCreateWithoutChatMessageInput = {
   id?: string
   rating: number
   comment?: string | null
+  tags?: Prisma.FeedbackCreatetagsInput | string[]
+  status?: string
+  resolvedAt?: Date | string | null
+  resolvedBy?: string | null
   createdAt?: Date | string
   userId: string
 }
@@ -569,6 +684,10 @@ export type FeedbackCreateManyUserInput = {
   id?: string
   rating: number
   comment?: string | null
+  tags?: Prisma.FeedbackCreatetagsInput | string[]
+  status?: string
+  resolvedAt?: Date | string | null
+  resolvedBy?: string | null
   createdAt?: Date | string
   chatMessageId: string
 }
@@ -577,6 +696,10 @@ export type FeedbackUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tags?: Prisma.FeedbackUpdatetagsInput | string[]
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resolvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chatMessage?: Prisma.ChatMessageUpdateOneRequiredWithoutFeedbacksNestedInput
 }
@@ -585,6 +708,10 @@ export type FeedbackUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tags?: Prisma.FeedbackUpdatetagsInput | string[]
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resolvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chatMessageId?: Prisma.StringFieldUpdateOperationsInput | string
 }
@@ -593,6 +720,10 @@ export type FeedbackUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tags?: Prisma.FeedbackUpdatetagsInput | string[]
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resolvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chatMessageId?: Prisma.StringFieldUpdateOperationsInput | string
 }
@@ -601,6 +732,10 @@ export type FeedbackCreateManyChatMessageInput = {
   id?: string
   rating: number
   comment?: string | null
+  tags?: Prisma.FeedbackCreatetagsInput | string[]
+  status?: string
+  resolvedAt?: Date | string | null
+  resolvedBy?: string | null
   createdAt?: Date | string
   userId: string
 }
@@ -609,6 +744,10 @@ export type FeedbackUpdateWithoutChatMessageInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tags?: Prisma.FeedbackUpdatetagsInput | string[]
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resolvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutFeedbacksNestedInput
 }
@@ -617,6 +756,10 @@ export type FeedbackUncheckedUpdateWithoutChatMessageInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tags?: Prisma.FeedbackUpdatetagsInput | string[]
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resolvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
 }
@@ -625,6 +768,10 @@ export type FeedbackUncheckedUpdateManyWithoutChatMessageInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tags?: Prisma.FeedbackUpdatetagsInput | string[]
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resolvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
 }
@@ -635,6 +782,10 @@ export type FeedbackSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   id?: boolean
   rating?: boolean
   comment?: boolean
+  tags?: boolean
+  status?: boolean
+  resolvedAt?: boolean
+  resolvedBy?: boolean
   createdAt?: boolean
   chatMessageId?: boolean
   userId?: boolean
@@ -646,6 +797,10 @@ export type FeedbackSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   id?: boolean
   rating?: boolean
   comment?: boolean
+  tags?: boolean
+  status?: boolean
+  resolvedAt?: boolean
+  resolvedBy?: boolean
   createdAt?: boolean
   chatMessageId?: boolean
   userId?: boolean
@@ -657,6 +812,10 @@ export type FeedbackSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   id?: boolean
   rating?: boolean
   comment?: boolean
+  tags?: boolean
+  status?: boolean
+  resolvedAt?: boolean
+  resolvedBy?: boolean
   createdAt?: boolean
   chatMessageId?: boolean
   userId?: boolean
@@ -668,12 +827,16 @@ export type FeedbackSelectScalar = {
   id?: boolean
   rating?: boolean
   comment?: boolean
+  tags?: boolean
+  status?: boolean
+  resolvedAt?: boolean
+  resolvedBy?: boolean
   createdAt?: boolean
   chatMessageId?: boolean
   userId?: boolean
 }
 
-export type FeedbackOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "rating" | "comment" | "createdAt" | "chatMessageId" | "userId", ExtArgs["result"]["feedback"]>
+export type FeedbackOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "rating" | "comment" | "tags" | "status" | "resolvedAt" | "resolvedBy" | "createdAt" | "chatMessageId" | "userId", ExtArgs["result"]["feedback"]>
 export type FeedbackInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   chatMessage?: boolean | Prisma.ChatMessageDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -697,6 +860,10 @@ export type $FeedbackPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     id: string
     rating: number
     comment: string | null
+    tags: string[]
+    status: string
+    resolvedAt: Date | null
+    resolvedBy: string | null
     createdAt: Date
     chatMessageId: string
     userId: string
@@ -1128,6 +1295,10 @@ export interface FeedbackFieldRefs {
   readonly id: Prisma.FieldRef<"Feedback", 'String'>
   readonly rating: Prisma.FieldRef<"Feedback", 'Int'>
   readonly comment: Prisma.FieldRef<"Feedback", 'String'>
+  readonly tags: Prisma.FieldRef<"Feedback", 'String[]'>
+  readonly status: Prisma.FieldRef<"Feedback", 'String'>
+  readonly resolvedAt: Prisma.FieldRef<"Feedback", 'DateTime'>
+  readonly resolvedBy: Prisma.FieldRef<"Feedback", 'String'>
   readonly createdAt: Prisma.FieldRef<"Feedback", 'DateTime'>
   readonly chatMessageId: Prisma.FieldRef<"Feedback", 'String'>
   readonly userId: Prisma.FieldRef<"Feedback", 'String'>

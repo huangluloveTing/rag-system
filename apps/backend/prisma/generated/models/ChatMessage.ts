@@ -63,6 +63,7 @@ export type ChatMessageCountAggregateOutputType = {
   references: number
   latencyMs: number
   tokensUsed: number
+  toolCalls: number
   createdAt: number
   sessionId: number
   _all: number
@@ -106,6 +107,7 @@ export type ChatMessageCountAggregateInputType = {
   references?: true
   latencyMs?: true
   tokensUsed?: true
+  toolCalls?: true
   createdAt?: true
   sessionId?: true
   _all?: true
@@ -204,6 +206,7 @@ export type ChatMessageGroupByOutputType = {
   references: runtime.JsonValue | null
   latencyMs: number | null
   tokensUsed: number | null
+  toolCalls: runtime.JsonValue | null
   createdAt: Date
   sessionId: string
   _count: ChatMessageCountAggregateOutputType | null
@@ -238,6 +241,7 @@ export type ChatMessageWhereInput = {
   references?: Prisma.JsonNullableFilter<"ChatMessage">
   latencyMs?: Prisma.IntNullableFilter<"ChatMessage"> | number | null
   tokensUsed?: Prisma.IntNullableFilter<"ChatMessage"> | number | null
+  toolCalls?: Prisma.JsonNullableFilter<"ChatMessage">
   createdAt?: Prisma.DateTimeFilter<"ChatMessage"> | Date | string
   sessionId?: Prisma.UuidFilter<"ChatMessage"> | string
   session?: Prisma.XOR<Prisma.ChatSessionScalarRelationFilter, Prisma.ChatSessionWhereInput>
@@ -251,6 +255,7 @@ export type ChatMessageOrderByWithRelationInput = {
   references?: Prisma.SortOrderInput | Prisma.SortOrder
   latencyMs?: Prisma.SortOrderInput | Prisma.SortOrder
   tokensUsed?: Prisma.SortOrderInput | Prisma.SortOrder
+  toolCalls?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   sessionId?: Prisma.SortOrder
   session?: Prisma.ChatSessionOrderByWithRelationInput
@@ -267,6 +272,7 @@ export type ChatMessageWhereUniqueInput = Prisma.AtLeast<{
   references?: Prisma.JsonNullableFilter<"ChatMessage">
   latencyMs?: Prisma.IntNullableFilter<"ChatMessage"> | number | null
   tokensUsed?: Prisma.IntNullableFilter<"ChatMessage"> | number | null
+  toolCalls?: Prisma.JsonNullableFilter<"ChatMessage">
   createdAt?: Prisma.DateTimeFilter<"ChatMessage"> | Date | string
   sessionId?: Prisma.UuidFilter<"ChatMessage"> | string
   session?: Prisma.XOR<Prisma.ChatSessionScalarRelationFilter, Prisma.ChatSessionWhereInput>
@@ -280,6 +286,7 @@ export type ChatMessageOrderByWithAggregationInput = {
   references?: Prisma.SortOrderInput | Prisma.SortOrder
   latencyMs?: Prisma.SortOrderInput | Prisma.SortOrder
   tokensUsed?: Prisma.SortOrderInput | Prisma.SortOrder
+  toolCalls?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   sessionId?: Prisma.SortOrder
   _count?: Prisma.ChatMessageCountOrderByAggregateInput
@@ -299,6 +306,7 @@ export type ChatMessageScalarWhereWithAggregatesInput = {
   references?: Prisma.JsonNullableWithAggregatesFilter<"ChatMessage">
   latencyMs?: Prisma.IntNullableWithAggregatesFilter<"ChatMessage"> | number | null
   tokensUsed?: Prisma.IntNullableWithAggregatesFilter<"ChatMessage"> | number | null
+  toolCalls?: Prisma.JsonNullableWithAggregatesFilter<"ChatMessage">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ChatMessage"> | Date | string
   sessionId?: Prisma.UuidWithAggregatesFilter<"ChatMessage"> | string
 }
@@ -310,6 +318,7 @@ export type ChatMessageCreateInput = {
   references?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   latencyMs?: number | null
   tokensUsed?: number | null
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   session: Prisma.ChatSessionCreateNestedOneWithoutMessagesInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutChatMessageInput
@@ -322,6 +331,7 @@ export type ChatMessageUncheckedCreateInput = {
   references?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   latencyMs?: number | null
   tokensUsed?: number | null
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   sessionId: string
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutChatMessageInput
@@ -334,6 +344,7 @@ export type ChatMessageUpdateInput = {
   references?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   latencyMs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   tokensUsed?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   session?: Prisma.ChatSessionUpdateOneRequiredWithoutMessagesNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutChatMessageNestedInput
@@ -346,6 +357,7 @@ export type ChatMessageUncheckedUpdateInput = {
   references?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   latencyMs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   tokensUsed?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessionId?: Prisma.StringFieldUpdateOperationsInput | string
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutChatMessageNestedInput
@@ -358,6 +370,7 @@ export type ChatMessageCreateManyInput = {
   references?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   latencyMs?: number | null
   tokensUsed?: number | null
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   sessionId: string
 }
@@ -369,6 +382,7 @@ export type ChatMessageUpdateManyMutationInput = {
   references?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   latencyMs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   tokensUsed?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -379,6 +393,7 @@ export type ChatMessageUncheckedUpdateManyInput = {
   references?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   latencyMs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   tokensUsed?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessionId?: Prisma.StringFieldUpdateOperationsInput | string
 }
@@ -400,6 +415,7 @@ export type ChatMessageCountOrderByAggregateInput = {
   references?: Prisma.SortOrder
   latencyMs?: Prisma.SortOrder
   tokensUsed?: Prisma.SortOrder
+  toolCalls?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   sessionId?: Prisma.SortOrder
 }
@@ -502,6 +518,7 @@ export type ChatMessageCreateWithoutSessionInput = {
   references?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   latencyMs?: number | null
   tokensUsed?: number | null
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutChatMessageInput
 }
@@ -513,6 +530,7 @@ export type ChatMessageUncheckedCreateWithoutSessionInput = {
   references?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   latencyMs?: number | null
   tokensUsed?: number | null
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutChatMessageInput
 }
@@ -553,6 +571,7 @@ export type ChatMessageScalarWhereInput = {
   references?: Prisma.JsonNullableFilter<"ChatMessage">
   latencyMs?: Prisma.IntNullableFilter<"ChatMessage"> | number | null
   tokensUsed?: Prisma.IntNullableFilter<"ChatMessage"> | number | null
+  toolCalls?: Prisma.JsonNullableFilter<"ChatMessage">
   createdAt?: Prisma.DateTimeFilter<"ChatMessage"> | Date | string
   sessionId?: Prisma.UuidFilter<"ChatMessage"> | string
 }
@@ -564,6 +583,7 @@ export type ChatMessageCreateWithoutFeedbacksInput = {
   references?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   latencyMs?: number | null
   tokensUsed?: number | null
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   session: Prisma.ChatSessionCreateNestedOneWithoutMessagesInput
 }
@@ -575,6 +595,7 @@ export type ChatMessageUncheckedCreateWithoutFeedbacksInput = {
   references?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   latencyMs?: number | null
   tokensUsed?: number | null
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   sessionId: string
 }
@@ -602,6 +623,7 @@ export type ChatMessageUpdateWithoutFeedbacksInput = {
   references?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   latencyMs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   tokensUsed?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   session?: Prisma.ChatSessionUpdateOneRequiredWithoutMessagesNestedInput
 }
@@ -613,6 +635,7 @@ export type ChatMessageUncheckedUpdateWithoutFeedbacksInput = {
   references?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   latencyMs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   tokensUsed?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessionId?: Prisma.StringFieldUpdateOperationsInput | string
 }
@@ -624,6 +647,7 @@ export type ChatMessageCreateManySessionInput = {
   references?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   latencyMs?: number | null
   tokensUsed?: number | null
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
 }
 
@@ -634,6 +658,7 @@ export type ChatMessageUpdateWithoutSessionInput = {
   references?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   latencyMs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   tokensUsed?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   feedbacks?: Prisma.FeedbackUpdateManyWithoutChatMessageNestedInput
 }
@@ -645,6 +670,7 @@ export type ChatMessageUncheckedUpdateWithoutSessionInput = {
   references?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   latencyMs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   tokensUsed?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutChatMessageNestedInput
 }
@@ -656,6 +682,7 @@ export type ChatMessageUncheckedUpdateManyWithoutSessionInput = {
   references?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   latencyMs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   tokensUsed?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -697,6 +724,7 @@ export type ChatMessageSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   references?: boolean
   latencyMs?: boolean
   tokensUsed?: boolean
+  toolCalls?: boolean
   createdAt?: boolean
   sessionId?: boolean
   session?: boolean | Prisma.ChatSessionDefaultArgs<ExtArgs>
@@ -711,6 +739,7 @@ export type ChatMessageSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   references?: boolean
   latencyMs?: boolean
   tokensUsed?: boolean
+  toolCalls?: boolean
   createdAt?: boolean
   sessionId?: boolean
   session?: boolean | Prisma.ChatSessionDefaultArgs<ExtArgs>
@@ -723,6 +752,7 @@ export type ChatMessageSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   references?: boolean
   latencyMs?: boolean
   tokensUsed?: boolean
+  toolCalls?: boolean
   createdAt?: boolean
   sessionId?: boolean
   session?: boolean | Prisma.ChatSessionDefaultArgs<ExtArgs>
@@ -735,11 +765,12 @@ export type ChatMessageSelectScalar = {
   references?: boolean
   latencyMs?: boolean
   tokensUsed?: boolean
+  toolCalls?: boolean
   createdAt?: boolean
   sessionId?: boolean
 }
 
-export type ChatMessageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "role" | "content" | "references" | "latencyMs" | "tokensUsed" | "createdAt" | "sessionId", ExtArgs["result"]["chatMessage"]>
+export type ChatMessageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "role" | "content" | "references" | "latencyMs" | "tokensUsed" | "toolCalls" | "createdAt" | "sessionId", ExtArgs["result"]["chatMessage"]>
 export type ChatMessageInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   session?: boolean | Prisma.ChatSessionDefaultArgs<ExtArgs>
   feedbacks?: boolean | Prisma.ChatMessage$feedbacksArgs<ExtArgs>
@@ -765,6 +796,7 @@ export type $ChatMessagePayload<ExtArgs extends runtime.Types.Extensions.Interna
     references: runtime.JsonValue | null
     latencyMs: number | null
     tokensUsed: number | null
+    toolCalls: runtime.JsonValue | null
     createdAt: Date
     sessionId: string
   }, ExtArgs["result"]["chatMessage"]>
@@ -1198,6 +1230,7 @@ export interface ChatMessageFieldRefs {
   readonly references: Prisma.FieldRef<"ChatMessage", 'Json'>
   readonly latencyMs: Prisma.FieldRef<"ChatMessage", 'Int'>
   readonly tokensUsed: Prisma.FieldRef<"ChatMessage", 'Int'>
+  readonly toolCalls: Prisma.FieldRef<"ChatMessage", 'Json'>
   readonly createdAt: Prisma.FieldRef<"ChatMessage", 'DateTime'>
   readonly sessionId: Prisma.FieldRef<"ChatMessage", 'String'>
 }

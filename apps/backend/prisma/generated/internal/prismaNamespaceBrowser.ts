@@ -179,6 +179,7 @@ export const ChatMessageScalarFieldEnum = {
   references: 'references',
   latencyMs: 'latencyMs',
   tokensUsed: 'tokensUsed',
+  toolCalls: 'toolCalls',
   createdAt: 'createdAt',
   sessionId: 'sessionId'
 } as const
@@ -190,6 +191,10 @@ export const FeedbackScalarFieldEnum = {
   id: 'id',
   rating: 'rating',
   comment: 'comment',
+  tags: 'tags',
+  status: 'status',
+  resolvedAt: 'resolvedAt',
+  resolvedBy: 'resolvedBy',
   createdAt: 'createdAt',
   chatMessageId: 'chatMessageId',
   userId: 'userId'

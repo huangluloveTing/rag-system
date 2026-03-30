@@ -44,11 +44,8 @@ export class RetrievalService {
   ): Promise<RetrievalResult[]> {
     const {
       knowledgeBaseId,
-      topK = this.configService.get<number>('TOP_K', 5),
-      similarityThreshold = this.configService.get<number>(
-        'SIMILARITY_THRESHOLD',
-        0.3
-      ),
+      topK = this.configService.get<number>('TOP_K', 8), // 从 5 调整为 8
+      similarityThreshold = this.getDynamicSimilarityThreshold(query), // 动态阈值
       enableRerank = this.configService.get<boolean>('ENABLE_RERANK', true),
     } = options;
 
@@ -128,6 +125,14 @@ export class RetrievalService {
       // 7. Rerank（如果启用）
       if (enableRerank && results.length > 0) {
         results = await this.rerankResults(query, results, topK);
+
+        // 增加 Rerank 阈值过滤：过滤掉 Rerank 后分数低于 0.5 的结果
+        const rerankThreshold = 0.5;
+        results = results.filter(r => r.score >= rerankThreshold);
+
+        if (results.length === 0) {
+          this.logger.warn(`All results filtered by rerank threshold: ${rerankThreshold}`);
+        }
       }
 
       // 8. 限制返回数量
@@ -174,6 +179,21 @@ export class RetrievalService {
       // Rerank 失败时返回原始结果
       return results;
     }
+  }
+
+  /**
+   * 动态相似度阈值（根据查询长度调整）
+   * 长查询更难匹配，降低阈值
+   */
+  private getDynamicSimilarityThreshold(query: string): number {
+    const baseThreshold = this.configService.get<number>('SIMILARITY_THRESHOLD', 0.3);
+
+    // 查询长度超过 20 字时，降低阈值
+    if (query.length > 20) {
+      return Math.max(0.2, baseThreshold - 0.05); // 最低 0.2
+    }
+
+    return baseThreshold;
   }
 
   /**

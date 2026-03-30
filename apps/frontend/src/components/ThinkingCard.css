@@ -1,0 +1,83 @@
+/**
+ * ThinkingCard 组件样式
+ */
+.thinking-card {
+  margin-bottom: 12px;
+  border: 1px solid #e8e8e8;
+  background: #fafafa;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.thinking-card:hover {
+  border-color: #1890ff;
+  background: #f0f5ff;
+}
+
+.thinking-card-no-retrieval {
+  background: #fffbe6;
+  border-color: #ffe58f;
+}
+
+.thinking-card-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  cursor: default;
+}
+
+.thinking-card-loading-text {
+  font-size: 13px;
+}
+
+.thinking-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.thinking-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.thinking-card-icon {
+  color: #1890ff;
+  font-size: 14px;
+}
+
+.thinking-card-no-retrieval .thinking-card-icon {
+  color: #faad14;
+}
+
+.thinking-card-toggle {
+  font-size: 12px;
+}
+
+.thinking-card-content {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e8e8e8;
+}
+
+.thinking-card-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.thinking-card-row:last-child {
+  margin-bottom: 0;
+}
+
+.thinking-card-row-icon {
+  color: #52c41a;
+  font-size: 12px;
+}

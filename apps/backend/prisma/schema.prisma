@@ -26,7 +26,7 @@ model User {
   chatSessions       ChatSession[]
   feedbacks          Feedback[]
   retrievalLogs      RetrievalLog[]
-  
+
   @@index([username])
   @@index([email])
   @@map("users")
@@ -165,18 +165,24 @@ model ChatMessage {
 // 反馈表
 model Feedback {
   id        String   @id @default(uuid()) @db.Uuid
-  rating    Int      // 1 or -1
-  comment   String?
+  rating    Int      // 1-5 星评分
+  comment   String?  @db.Text // 可选文字反馈
+  tags      String[] // 反馈标签：["不准确", "不完整", "来源错误"]
+  status    String   @default("pending") @db.VarChar(20) // pending/resolved/ignored
+  resolvedAt DateTime?
+  resolvedBy String? @db.Uuid
   createdAt DateTime @default(now())
-  
+
   chatMessageId String @db.Uuid
   chatMessage   ChatMessage @relation(fields: [chatMessageId], references: [id])
-  
+
   userId     String @db.Uuid
   user       User   @relation(fields: [userId], references: [id])
-  
+
   @@index([chatMessageId])
   @@index([rating])
+  @@index([status])
+  @@index([userId])
   @@map("feedbacks")
 }
 
