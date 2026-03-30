@@ -8,7 +8,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import zhCN from 'antd/locale/zh_CN';
 import BasicLayout from '@/layouts/BasicLayout';
 import LoginPage from '@/pages/Login';
-import ChatPage from '@/pages/Chat';
+import ChatPage from '@/pages/Chat/index';
 import DocumentsPage from '@/pages/Documents';
 import KnowledgePage from '@/pages/Knowledge';
 import MonitorPage from '@/pages/Monitor';
