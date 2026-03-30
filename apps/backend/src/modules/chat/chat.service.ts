@@ -499,7 +499,7 @@ export class ChatService {
       });
 
       // Convert Response to async iterator for OpenAI compatibility
-      const reader = response.body.getReader();
+      const reader = response.body!.getReader();
       const decoder = new TextDecoder();
 
       while (true) {
@@ -605,6 +605,13 @@ export class ChatService {
       // 提取 citations
       const citations = this.extractCitations(toolInvocations);
 
+      let tokensUsed = 0;
+      if (usage && typeof usage === 'object') {
+        // Type assertion to handle the different possible structures
+        const usageObj: any = usage;
+        tokensUsed = (usageObj.total_tokens || usageObj.totalTokens || 0) as number;
+      }
+
       // 保存到数据库
       await this.prisma.chatMessage.create({
         data: {
@@ -620,7 +627,7 @@ export class ChatService {
               ? ({ toJSON: () => citations } as any)
               : undefined,
           latencyMs: Date.now() - startTime,
-          tokensUsed: usage?.totalTokens || 0,
+          tokensUsed,
         },
       });
 

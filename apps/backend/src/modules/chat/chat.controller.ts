@@ -61,22 +61,16 @@ export class ChatController {
   }
 
   /**
-   * 标准 RAG 流式聊天接口
+   * 流式聊天（UI Message Stream）
+   * POST /api/v1/chat/stream
    */
   @Post('stream')
-  @Sse()
-  @ApiOperation({ summary: '发送消息（SSE 流式）' })
+  @ApiOperation({ summary: '流式聊天（UI Message Stream）' })
   async streamMessage(
     @Body() request: ChatRequest,
-    @CurrentUser() user: any
-  ): Promise<Observable<{ data: string }>> {
-    const generator = this.chatService.chatStream(request, user.id);
-
-    return from(generator).pipe(
-      map((chunk) => ({
-        data: chunk,
-      }))
-    );
+    @CurrentUser() user: any,
+  ): Promise<any> {
+    return this.chatService.chatStream(request, user.id);
   }
 
   /**
