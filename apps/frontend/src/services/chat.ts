@@ -210,3 +210,64 @@ export async function ragChatStream(
     onError(error as Error);
   }
 }
+
+/**
+ * 获取用户会话列表
+ */
+export async function getSessions(page: number = 1, pageSize: number = 20) {
+  const token = localStorage.getItem('token');
+  const url = `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/v1/chat/sessions?page=${page}&pageSize=${pageSize}`;
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch sessions');
+  }
+
+  return response.json();
+}
+
+/**
+ * 获取会话详情（包含消息历史）
+ */
+export async function getSessionDetail(sessionId: string) {
+  const token = localStorage.getItem('token');
+  const url = `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/v1/chat/sessions/${sessionId}`;
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch session detail');
+  }
+
+  return response.json();
+}
+
+/**
+ * 删除会话
+ */
+export async function deleteSession(sessionId: string) {
+  const token = localStorage.getItem('token');
+  const url = `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/v1/chat/sessions/${sessionId}`;
+
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to delete session');
+  }
+
+  return response.json();
+}
