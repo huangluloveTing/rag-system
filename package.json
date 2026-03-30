@@ -15,8 +15,8 @@
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:infra": "docker-compose -f docker-compose.infra.yml up -d",
-    "db:migrate": "pnpm --filter @rag-system/backend prisma migrate dev",
-    "db:seed": "pnpm --filter @rag-system/backend prisma db seed",
+    "db:migrate": "pnpm --filter @rag-system/backend prisma:generate",
+    "db:seed": "pnpm --filter @rag-system/backend prisma:seed",
     "db:studio": "pnpm --filter @rag-system/backend prisma studio"
   },
   "keywords": [

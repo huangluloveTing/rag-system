@@ -295,6 +295,10 @@ export class ChatService {
         enableToolCalling: true,
       });
 
+      if (!response.body) {
+        throw new Error('Response body is null');
+      }
+
       // 6. 异步保存助手消息（流式结束后）
       this.saveAssistantMessage(response.clone(), session.id, startTime).catch(
         (err) => {
@@ -562,45 +566,37 @@ export class ChatService {
    * 异步保存助手消息
    */
   private async saveAssistantMessage(
-    response: any,  // Changed from Response to any to avoid typing issues
+    response: Response,
     sessionId: string,
     startTime: number,
   ): Promise<void> {
+    const reader = response.body?.getReader();
+    if (!reader) {
+      this.logger.error('Response body is not readable');
+      return;
+    }
+
+    const decoder = new TextDecoder();
+    let fullContent = '';
+    let toolInvocations: any[] = [];
+    let usage = null;
+
     try {
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-
-      let fullContent = '';
-      let toolInvocations: any[] = [];
-      let usage = null;
-
-      // 读取完整流
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
 
-        // 解析 UI Message Stream 格式（SSE）
-        const lines = chunk.split('\n');
-        for (const line of lines) {
+        for (const line of chunk.split('\n')) {
           if (line.startsWith('data: ')) {
             try {
               const data = JSON.parse(line.substring(6));
-
-              if (data.content) {
-                fullContent += data.content;
-              }
-
-              if (data.toolInvocations) {
-                toolInvocations = data.toolInvocations;
-              }
-
-              if (data.usage) {
-                usage = data.usage;
-              }
+              if (data.content) fullContent += data.content;
+              if (data.toolInvocations) toolInvocations = data.toolInvocations;
+              if (data.usage) usage = data.usage;
             } catch (e) {
-              // 忽略解析错误
+              // Ignore parse errors
             }
           }
         }
@@ -630,7 +626,13 @@ export class ChatService {
 
       this.logger.debug(`Saved assistant message for session ${sessionId}`);
     } catch (error) {
-      this.logger.error('Error saving assistant message:', error);
+      this.logger.error('Error reading stream:', error);
+    } finally {
+      try {
+        await reader.cancel();
+      } catch (e) {
+        // Ignore cancel errors
+      }
     }
   }
 
@@ -641,16 +643,18 @@ export class ChatService {
     return toolInvocations
       .filter(
         (inv) =>
-          inv.toolName === 'knowledge_base_search' && inv.result?.results,
+          inv.toolName === 'knowledge_base_search' &&
+          inv.result?.results &&
+          Array.isArray(inv.result.results),
       )
       .flatMap((inv) =>
         inv.result.results.map((r: any, idx: number) => ({
           index: idx + 1,
-          chunkId: r.index.toString(),
+          chunkId: r.index?.toString() || '',
           documentId: r.source || '',
-          content: r.content,
+          content: r.content || '',
           source: r.source || '未知文档',
-          score: r.score,
+          score: r.score || 0,
         })),
       );
   }
