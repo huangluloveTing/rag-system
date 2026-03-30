@@ -27,17 +27,16 @@ const ChatPage: React.FC = () => {
     deleteSessionById,
   } = useSessionManager();
 
-  // Use Vercel AI SDK's useChat hook
+  // Use Vercel AI SDK's useChat hook with new API (v3+)
   const {
     messages,
-    input,
-    handleInputChange,
-    handleSubmit,
-    isLoading,
+    status,
     error,
     stop,
     setMessages,
+    sendMessage,
   } = useChat({
+    id: 'rag-chat',
     api: `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/v1/chat/stream`,
     headers: {
       Authorization: `Bearer ${token}`,
@@ -45,8 +44,8 @@ const ChatPage: React.FC = () => {
     body: {
       sessionId: currentSessionId,
     },
-    onError: (error) => {
-      console.error('Chat error:', error);
+    onError: (err) => {
+      console.error('Chat error:', err);
       message.error('发送失败，请重试');
     },
   });
@@ -72,7 +71,7 @@ const ChatPage: React.FC = () => {
   };
 
   // Convert messages to Bubble.List items
-  const bubbleItems = messages.flatMap((msg: Message) => {
+  const bubbleItems = messages.flatMap((msg: any) => {
     const items: any[] = [];
 
     const hasToolInvocations =
@@ -87,7 +86,7 @@ const ChatPage: React.FC = () => {
         content: (
           <ThinkingCard
             toolInvocations={msg.toolInvocations as ToolInvocation[]}
-            isStreaming={isLoading && msg.content === ''}
+            isStreaming={status === 'streaming' && (!msg.content || msg.content === '')}
           />
         ),
       });
@@ -96,8 +95,8 @@ const ChatPage: React.FC = () => {
     items.push({
       key: msg.id,
       placement: msg.role === 'user' ? 'end' : 'start',
-      typing: isLoading && msg.role === 'assistant',
-      content: msg.content,
+      typing: status === 'streaming' && msg.role === 'assistant',
+      content: msg.content || '',
     });
 
     return items;
@@ -109,6 +108,21 @@ const ChatPage: React.FC = () => {
       message.error(error.message || '发生错误');
     }
   }, [error]);
+
+  // Input state
+  const [input, setInput] = React.useState('');
+
+  // Handle send
+  const handleSend = () => {
+    if (!input.trim()) return;
+    sendMessage(input);
+    setInput('');
+  };
+
+  // Handle stop
+  const handleStop = () => {
+    stop();
+  };
 
   return (
     <div
@@ -156,10 +170,10 @@ const ChatPage: React.FC = () => {
         {/* Input */}
         <ChatInput
           value={input}
-          onChange={(value) => handleInputChange({ target: { value } } as any)}
-          onSend={() => handleSubmit(undefined as any)}
-          onStop={stop}
-          loading={isLoading}
+          onChange={setInput}
+          onSend={handleSend}
+          onStop={handleStop}
+          loading={status === 'streaming'}
         />
       </div>
     </div>
