@@ -89,7 +89,7 @@ export class ChatService {
   constructor(
     private prisma: PrismaService,
     private retrievalService: RetrievalService,
-    private llmService: LlmService
+    private llmService: LlmService,
   ) {}
 
   /**
@@ -242,17 +242,18 @@ export class ChatService {
     }
   }
 
-  async *chatStream(
+  /**
+   * 流式聊天（UI Message Stream）
+   */
+  async chatStream(
     request: ChatRequest,
-    userId: string
-  ): AsyncGenerator<string> {
+    userId: string,
+  ): Promise<Response> {
     const { question, knowledgeBaseId, sessionId } = request;
     const startTime = Date.now();
 
     try {
-      this.logger.debug(`Processing streaming chat request`);
-
-      // 1. 获取或创建会话
+      // 1. 创建/获取会话
       let session = sessionId
         ? await this.prisma.chatSession.findUnique({
             where: { id: sessionId },
@@ -267,16 +268,17 @@ export class ChatService {
             title: question.substring(0, 50),
           },
         });
+        this.logger.debug(`Created new session: ${session.id}`);
       }
 
       // 2. 获取历史消息
       const history = await this.getChatHistory(session.id);
 
-      // 3. 构建 Prompt（使用 Tool Calling System Prompt）
+      // 3. 构建消息
       const messages: ChatMessage[] = [
         ...this.llmService.buildToolCallingPrompt(),
-        ...history.slice(-12),  // 保留最近 12 条历史
-        { role: 'user', content: question }
+        ...history.slice(-12),
+        { role: 'user', content: question },
       ];
 
       // 4. 保存用户消息
@@ -288,35 +290,25 @@ export class ChatService {
         },
       });
 
-      // 5. 流式生成答案（启用 Tool Calling）
-      const stream = await this.llmService.generateStream(messages, {
+      // 5. 调用 LLM 流式生成（SDK 自动处理工具调用）
+      const response = await this.llmService.generateStream(messages, {
         enableToolCalling: true,
       });
-      let fullContent = '';
 
-      for await (const chunk of stream) {
-        fullContent += chunk;
-        yield chunk;
-      }
-
-      // 6. 保存助手消息（流式模式无法获取 tool calling 元数据）
-      await this.prisma.chatMessage.create({
-        data: {
-          sessionId: session.id,
-          role: 'assistant',
-          content: fullContent,
-          toolCalls: undefined,
-          references: undefined,
-          latencyMs: Date.now() - startTime,
+      // 6. 异步保存助手消息（流式结束后）
+      this.saveAssistantMessage(response.clone(), session.id, startTime).catch(
+        (err) => {
+          this.logger.error('Failed to save assistant message:', err);
         },
-      });
+      );
 
-      this.logger.debug(`Streaming chat completed in ${Date.now() - startTime}ms`);
+      return response;
     } catch (error) {
-      this.logger.error(`Streaming chat failed: ${error.message}`);
+      this.logger.error(`Chat stream failed: ${error.message}`);
       throw error;
     }
   }
+
 
   /**
    * 获取会话历史
@@ -497,27 +489,49 @@ export class ChatService {
       };
 
       // 流式生成内容
-      const stream = await this.llmService.generateStream(messages, {
+      const response = await this.llmService.generateStream(messages, {
         temperature,
         maxTokens,
       });
 
-      for await (const contentChunk of stream) {
-        yield {
-          id: completionId,
-          object: 'chat.completion.chunk',
-          created,
-          model,
-          choices: [
-            {
-              index: 0,
-              delta: {
-                content: contentChunk,
-              },
-              finish_reason: null,
-            },
-          ],
-        };
+      // Convert Response to async iterator for OpenAI compatibility
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        // Parse the SSE format from UI Message Stream
+        const lines = chunk.split('\n');
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.substring(6));
+
+              if (data.content) {
+                yield {
+                  id: completionId,
+                  object: 'chat.completion.chunk',
+                  created,
+                  model,
+                  choices: [
+                    {
+                      index: 0,
+                      delta: {
+                        content: data.content,
+                      },
+                      finish_reason: null,
+                    },
+                  ],
+                };
+              }
+            } catch (e) {
+              // Ignore parsing errors
+            }
+          }
+        }
       }
 
       // 发送结束 chunk
@@ -542,5 +556,102 @@ export class ChatService {
       );
       throw error;
     }
+  }
+
+  /**
+   * 异步保存助手消息
+   */
+  private async saveAssistantMessage(
+    response: any,  // Changed from Response to any to avoid typing issues
+    sessionId: string,
+    startTime: number,
+  ): Promise<void> {
+    try {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      let fullContent = '';
+      let toolInvocations: any[] = [];
+      let usage = null;
+
+      // 读取完整流
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+
+        // 解析 UI Message Stream 格式（SSE）
+        const lines = chunk.split('\n');
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.substring(6));
+
+              if (data.content) {
+                fullContent += data.content;
+              }
+
+              if (data.toolInvocations) {
+                toolInvocations = data.toolInvocations;
+              }
+
+              if (data.usage) {
+                usage = data.usage;
+              }
+            } catch (e) {
+              // 忽略解析错误
+            }
+          }
+        }
+      }
+
+      // 提取 citations
+      const citations = this.extractCitations(toolInvocations);
+
+      // 保存到数据库
+      await this.prisma.chatMessage.create({
+        data: {
+          sessionId,
+          role: 'assistant',
+          content: fullContent,
+          toolCalls:
+            toolInvocations.length > 0
+              ? ({ toJSON: () => toolInvocations } as any)
+              : undefined,
+          references:
+            citations.length > 0
+              ? ({ toJSON: () => citations } as any)
+              : undefined,
+          latencyMs: Date.now() - startTime,
+          tokensUsed: usage?.totalTokens || 0,
+        },
+      });
+
+      this.logger.debug(`Saved assistant message for session ${sessionId}`);
+    } catch (error) {
+      this.logger.error('Error saving assistant message:', error);
+    }
+  }
+
+  /**
+   * 从工具调用记录中提取 citations
+   */
+  private extractCitations(toolInvocations: any[]): any[] {
+    return toolInvocations
+      .filter(
+        (inv) =>
+          inv.toolName === 'knowledge_base_search' && inv.result?.results,
+      )
+      .flatMap((inv) =>
+        inv.result.results.map((r: any, idx: number) => ({
+          index: idx + 1,
+          chunkId: r.index.toString(),
+          documentId: r.source || '',
+          content: r.content,
+          source: r.source || '未知文档',
+          score: r.score,
+        })),
+      );
   }
 }
