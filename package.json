@@ -17,6 +17,7 @@
     "docker:infra": "docker-compose -f docker-compose.infra.yml up -d",
     "db:migrate": "pnpm --filter @rag-system/backend prisma:generate",
     "db:seed": "pnpm --filter @rag-system/backend prisma:seed",
+    "db:generate": "pnpm --filter @rag-system/backend prisma:generate",
     "db:studio": "pnpm --filter @rag-system/backend prisma studio"
   },
   "keywords": [
