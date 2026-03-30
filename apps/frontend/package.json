@@ -10,9 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ai-sdk/react": "^3.0.136",
     "@ant-design/icons": "^6.1.0",
     "@ant-design/x": "^2.4.0",
     "@ant-design/x-sdk": "^2.4.0",
+    "ai": "^6.0.134",
     "antd": "^5.29.3",
     "axios": "^1.13.6",
     "react": "^19.2.4",
