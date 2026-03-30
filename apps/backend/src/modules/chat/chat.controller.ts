@@ -25,6 +25,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ChatService, ChatRequest, ChatResponse } from './chat.service';
 import { Observable, from } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { convertToModelMessages } from 'ai';
 
 // OpenAI Chat Completion API 类型
 export interface OpenAIChatMessage {
@@ -50,27 +51,33 @@ export class ChatController {
   /**
    * 标准 RAG 聊天接口
    */
-  @Post()
-  @ApiOperation({ summary: '发送消息（非流式）' })
-  @ApiResponse({ status: 201, description: '返回答案' })
-  async sendMessage(
-    @Body() request: ChatRequest,
-    @CurrentUser() user: any
-  ): Promise<ChatResponse> {
-    return this.chatService.chat(request, user.id);
-  }
+  // @Post()
+  // @ApiOperation({ summary: '发送消息（非流式）' })
+  // @ApiResponse({ status: 201, description: '返回答案' })
+  // async sendMessage(
+  //   @Body() request: ChatRequest,
+  //   @CurrentUser() user: any
+  // ): Promise<ChatResponse> {
+  //   return this.chatService.chat(request, user.id);
+  // }
 
   /**
    * 流式聊天（UI Message Stream）
    * POST /api/v1/chat/stream
    */
   @Post('stream')
+  @Sse()
   @ApiOperation({ summary: '流式聊天（UI Message Stream）' })
   async streamMessage(
     @Body() request: ChatRequest,
     @CurrentUser() user: any,
   ): Promise<any> {
-    return this.chatService.chatStream(request, user.id);
+    const generator = await this.chatService.chatStream(request, user.id);
+    return from(generator).pipe(
+      map((chunk) => ({
+        data: JSON.stringify(chunk),
+      }))
+    );
   }
 
   /**
@@ -85,6 +92,8 @@ export class ChatController {
   ) {
     const { messages, temperature, max_tokens, stream = false } = request;
 
+    const newMessages = await convertToModelMessages(messages as any);
+
     if (stream) {
       // 流式响应将在下面处理
       throw new Error('For streaming, use POST /chat/completions/stream');
@@ -92,7 +101,7 @@ export class ChatController {
 
     // 非流式响应
     const result = await this.chatService.openAIChatCompletion(
-      messages,
+       newMessages,
       {
         temperature,
         maxTokens: max_tokens,

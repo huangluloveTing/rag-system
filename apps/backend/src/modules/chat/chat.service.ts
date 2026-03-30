@@ -8,9 +8,10 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RetrievalService, RetrievalResult } from '../retrieval/retrieval.service';
 import { LlmService, ChatMessage } from '../llm/llm.service';
+import { AsyncIterableStream, convertToModelMessages, InferUIMessageChunk, ModelMessage, UIMessage } from 'ai';
 
 export interface ChatRequest {
-  question: string;
+  messages: ChatMessage[];
   knowledgeBaseId?: string;
   sessionId?: string;
   stream?: boolean;
@@ -95,152 +96,152 @@ export class ChatService {
   /**
    * 处理聊天请求（非流式）
    */
-  async chat(request: ChatRequest, userId: string): Promise<ChatResponse> {
-    const { question, knowledgeBaseId, sessionId } = request;
-    const startTime = Date.now();
+  // async chat(request: ChatRequest, userId: string): Promise<ChatResponse> {
+  //   const { question, knowledgeBaseId, sessionId } = request;
+  //   const startTime = Date.now();
 
-    try {
-      this.logger.debug(`Processing chat request: "${question.substring(0, 50)}..."`);
+  //   try {
+  //     this.logger.debug(`Processing chat request: "${question.substring(0, 50)}..."`);
 
-      // 1. 获取或创建会话
-      let session = sessionId
-        ? await this.prisma.chatSession.findUnique({
-            where: { id: sessionId },
-          })
-        : null;
+  //     // 1. 获取或创建会话
+  //     let session = sessionId
+  //       ? await this.prisma.chatSession.findUnique({
+  //           where: { id: sessionId },
+  //         })
+  //       : null;
 
-      if (!session) {
-        session = await this.prisma.chatSession.create({
-          data: {
-            userId,
-            knowledgeBaseId,
-            title: question.substring(0, 50),
-          },
-        });
-        this.logger.debug(`Created new session: ${session.id}`);
-      }
+  //     if (!session) {
+  //       session = await this.prisma.chatSession.create({
+  //         data: {
+  //           userId,
+  //           knowledgeBaseId,
+  //           title: question.substring(0, 50),
+  //         },
+  //       });
+  //       this.logger.debug(`Created new session: ${session.id}`);
+  //     }
 
-      // 2. 获取历史消息
-      const history = await this.getChatHistory(session.id);
+  //     // 2. 获取历史消息
+  //     const history = await this.getChatHistory(session.id);
 
-      // 3. 构建 Prompt（使用 Tool Calling System Prompt）
-      const messages: ChatMessage[] = [
-        ...this.llmService.buildToolCallingPrompt(),
-        ...history.slice(-12),  // 保留最近 12 条历史（从 6 条扩展到 12 条）
-        { role: 'user', content: question }
-      ];
+  //     // 3. 构建 Prompt（使用 Tool Calling System Prompt）
+  //     const messages: ChatMessage[] = [
+  //       ...this.llmService.buildToolCallingPrompt(),
+  //       ...history.slice(-12),  // 保留最近 12 条历史（从 6 条扩展到 12 条）
+  //       { role: 'user', content: question }
+  //     ];
 
-      // 4. 调用 LLM 生成答案（启用 Tool Calling）
-      const llmResponse = await this.llmService.generate(messages, {
-        enableToolCalling: true,
-      });
+  //     // 4. 调用 LLM 生成答案（启用 Tool Calling）
+  //     const llmResponse = await this.llmService.generate(messages, {
+  //       enableToolCalling: true,
+  //     });
 
-      // 5. 保存用户消息
-      await this.prisma.chatMessage.create({
-        data: {
-          sessionId: session.id,
-          role: 'user',
-          content: question,
-        },
-      });
+  //     // 5. 保存用户消息
+  //     await this.prisma.chatMessage.create({
+  //       data: {
+  //         sessionId: session.id,
+  //         role: 'user',
+  //         content: question,
+  //       },
+  //     });
 
-      // Transform tool results to match RetrievalResult structure for database storage
-      const referencesForDB = llmResponse.toolCalls
-        ? llmResponse.toolCalls.flatMap(tc =>
-            tc.toolResult.results.map(result => ({
-              chunkId: result.index.toString(), // Using index as chunkId
-              documentId: result.source || '',  // Using source as documentId
-              content: result.content,
-              score: result.score,
-              metadata: { source: result.source }
-            }))
-          )
-        : [];
+  //     // Transform tool results to match RetrievalResult structure for database storage
+  //     const referencesForDB = llmResponse.toolCalls
+  //       ? llmResponse.toolCalls.flatMap(tc =>
+  //           tc.toolResult.results.map(result => ({
+  //             chunkId: result.index.toString(), // Using index as chunkId
+  //             documentId: result.source || '',  // Using source as documentId
+  //             content: result.content,
+  //             score: result.score,
+  //             metadata: { source: result.source }
+  //           }))
+  //         )
+  //       : [];
 
-      // 6. 保存助手消息（包含 tool calling 元数据）
-      await this.prisma.chatMessage.create({
-        data: {
-          sessionId: session.id,
-          role: 'assistant',
-          content: llmResponse.content,
-          toolCalls: llmResponse.toolCalls ? { toJSON: () => llmResponse.toolCalls } as any : undefined,
-          references: referencesForDB.length > 0 ? { toJSON: () => referencesForDB } as any : undefined,
-          latencyMs: Date.now() - startTime,
-          tokensUsed: llmResponse.usage.total_tokens,
-        },
-      });
+  //     // 6. 保存助手消息（包含 tool calling 元数据）
+  //     await this.prisma.chatMessage.create({
+  //       data: {
+  //         sessionId: session.id,
+  //         role: 'assistant',
+  //         content: llmResponse.content,
+  //         toolCalls: llmResponse.toolCalls ? { toJSON: () => llmResponse.toolCalls } as any : undefined,
+  //         references: referencesForDB.length > 0 ? { toJSON: () => referencesForDB } as any : undefined,
+  //         latencyMs: Date.now() - startTime,
+  //         tokensUsed: llmResponse.usage.total_tokens,
+  //       },
+  //     });
 
-      this.logger.debug(
-        `Chat completed in ${Date.now() - startTime}ms, tokens: ${llmResponse.usage.total_tokens}, toolCalls: ${llmResponse.toolCalls?.length || 0}`
-      );
+  //     this.logger.debug(
+  //       `Chat completed in ${Date.now() - startTime}ms, tokens: ${llmResponse.usage.total_tokens}, toolCalls: ${llmResponse.toolCalls?.length || 0}`
+  //     );
 
-      // 7. 记录检索日志（如果有 tool calling）
-      if (llmResponse.toolCalls && llmResponse.toolCalls.length > 0) {
-        await this.prisma.retrievalLog.create({
-          data: {
-            question,
-            retrievedDocs: llmResponse.toolCalls.flatMap(tc =>
-              tc.toolResult.results.map(r => ({
-                chunkId: r.index.toString(), // Using index as chunkId
-                documentId: r.source || '',  // Using source as documentId
-                score: r.score,
-              }))
-            ),
-            latencyMs: Date.now() - startTime,
-            userId,
-          },
-        });
-      }
+  //     // 7. 记录检索日志（如果有 tool calling）
+  //     if (llmResponse.toolCalls && llmResponse.toolCalls.length > 0) {
+  //       await this.prisma.retrievalLog.create({
+  //         data: {
+  //           question,
+  //           retrievedDocs: llmResponse.toolCalls.flatMap(tc =>
+  //             tc.toolResult.results.map(r => ({
+  //               chunkId: r.index.toString(), // Using index as chunkId
+  //               documentId: r.source || '',  // Using source as documentId
+  //               score: r.score,
+  //             }))
+  //           ),
+  //           latencyMs: Date.now() - startTime,
+  //           userId,
+  //         },
+  //       });
+  //     }
 
-      // Transform tool results to match RetrievalResult structure
-      const references = llmResponse.toolCalls
-        ? llmResponse.toolCalls.flatMap(tc =>
-            tc.toolResult.results.map(result => ({
-              chunkId: result.index.toString(), // Using index as chunkId
-              documentId: result.source || '',  // Using source as documentId
-              content: result.content,
-              score: result.score,
-              metadata: { source: result.source }
-            }))
-          )
-        : [];
+  //     // Transform tool results to match RetrievalResult structure
+  //     const references = llmResponse.toolCalls
+  //       ? llmResponse.toolCalls.flatMap(tc =>
+  //           tc.toolResult.results.map(result => ({
+  //             chunkId: result.index.toString(), // Using index as chunkId
+  //             documentId: result.source || '',  // Using source as documentId
+  //             content: result.content,
+  //             score: result.score,
+  //             metadata: { source: result.source }
+  //           }))
+  //         )
+  //       : [];
 
-      // Build citations for frontend display
-      const citations: Citation[] = references.map((r, idx) => ({
-        index: idx + 1,
-        chunkId: r.chunkId,
-        documentId: r.documentId,
-        content: r.content,
-        source: (r.metadata?.source as string) || '未知文档',
-        score: r.score,
-      }));
+  //     // Build citations for frontend display
+  //     const citations: Citation[] = references.map((r, idx) => ({
+  //       index: idx + 1,
+  //       chunkId: r.chunkId,
+  //       documentId: r.documentId,
+  //       content: r.content,
+  //       source: (r.metadata?.source as string) || '未知文档',
+  //       score: r.score,
+  //     }));
 
-      // Build thinking info
-      const thinking: ThinkingInfo = llmResponse.toolCalls && llmResponse.toolCalls.length > 0
-        ? {
-            usedToolCalling: true,
-            searchQuery: llmResponse.toolCalls[0]?.toolArgs?.query || question,
-            resultCount: references.length,
-            topScore: references.length > 0 ? references[0].score : 0,
-          }
-        : {
-            usedToolCalling: false,
-            message: '基于通用知识回答',
-          };
+  //     // Build thinking info
+  //     const thinking: ThinkingInfo = llmResponse.toolCalls && llmResponse.toolCalls.length > 0
+  //       ? {
+  //           usedToolCalling: true,
+  //           searchQuery: llmResponse.toolCalls[0]?.toolArgs?.query || question,
+  //           resultCount: references.length,
+  //           topScore: references.length > 0 ? references[0].score : 0,
+  //         }
+  //       : {
+  //           usedToolCalling: false,
+  //           message: '基于通用知识回答',
+  //         };
 
-      return {
-        answer: llmResponse.content,
-        sessionId: session.id,
-        references,
-        citations,
-        thinking,
-        usage: llmResponse.usage,
-      };
-    } catch (error) {
-      this.logger.error(`Chat failed: ${error.message}`);
-      throw error;
-    }
-  }
+  //     return {
+  //       answer: llmResponse.content,
+  //       sessionId: session.id,
+  //       references,
+  //       citations,
+  //       thinking,
+  //       usage: llmResponse.usage,
+  //     };
+  //   } catch (error) {
+  //     this.logger.error(`Chat failed: ${error.message}`);
+  //     throw error;
+  //   }
+  // }
 
   /**
    * 流式聊天（UI Message Stream）
@@ -248,9 +249,11 @@ export class ChatService {
   async chatStream(
     request: ChatRequest,
     userId: string,
-  ): Promise<Response> {
-    const { question, knowledgeBaseId, sessionId } = request;
+  ): Promise<AsyncIterableStream<InferUIMessageChunk<UIMessage>>> {
+    const { messages, knowledgeBaseId, sessionId } = request;
     const startTime = Date.now();
+
+    const modelMessages = await convertToModelMessages(messages as any);
 
     try {
       // 1. 创建/获取会话
@@ -260,51 +263,50 @@ export class ChatService {
           })
         : null;
 
-      if (!session) {
-        session = await this.prisma.chatSession.create({
-          data: {
-            userId,
-            knowledgeBaseId,
-            title: question.substring(0, 50),
-          },
-        });
-        this.logger.debug(`Created new session: ${session.id}`);
-      }
+      // if (!session) {
+      //   session = await this.prisma.chatSession.create({
+      //     data: {
+      //       userId,
+      //       knowledgeBaseId,
+      //       title: (question as string).substring(0, 50),
+      //     },
+      //   });
+      //   this.logger.debug(`Created new session: ${session.id}`);
+      // }
 
       // 2. 获取历史消息
-      const history = await this.getChatHistory(session.id);
+      // const history = await this.getChatHistory(session.id);
 
       // 3. 构建消息
       const messages: ChatMessage[] = [
         ...this.llmService.buildToolCallingPrompt(),
-        ...history.slice(-12),
-        { role: 'user', content: question },
+        ...modelMessages
       ];
 
       // 4. 保存用户消息
-      await this.prisma.chatMessage.create({
-        data: {
-          sessionId: session.id,
-          role: 'user',
-          content: question,
-        },
-      });
+      // await this.prisma.chatMessage.create({
+      //   data: {
+      //     sessionId: session.id,
+      //     role: 'user',
+      //     content: question,
+      //   },
+      // });
 
       // 5. 调用 LLM 流式生成（SDK 自动处理工具调用）
       const response = await this.llmService.generateStream(messages, {
         enableToolCalling: true,
       });
 
-      if (!response.body) {
-        throw new Error('Response body is null');
-      }
+      // if (!response.body) {
+      //   throw new Error('Response body is null');
+      // }
 
       // 6. 异步保存助手消息（流式结束后）
-      this.saveAssistantMessage(response.clone(), session.id, startTime).catch(
-        (err) => {
-          this.logger.error('Failed to save assistant message:', err);
-        },
-      );
+      // this.saveAssistantMessage(response.clone(), session.id, startTime).catch(
+      //   (err) => {
+      //     this.logger.error('Failed to save assistant message:', err);
+      //   },
+      // );
 
       return response;
     } catch (error) {
@@ -498,62 +500,8 @@ export class ChatService {
         maxTokens,
       });
 
-      // Convert Response to async iterator for OpenAI compatibility
-      const reader = response.body!.getReader();
-      const decoder = new TextDecoder();
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        // Parse the SSE format from UI Message Stream
-        const lines = chunk.split('\n');
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.substring(6));
-
-              if (data.content) {
-                yield {
-                  id: completionId,
-                  object: 'chat.completion.chunk',
-                  created,
-                  model,
-                  choices: [
-                    {
-                      index: 0,
-                      delta: {
-                        content: data.content,
-                      },
-                      finish_reason: null,
-                    },
-                  ],
-                };
-              }
-            } catch (e) {
-              // Ignore parsing errors
-            }
-          }
-        }
-      }
-
-      // 发送结束 chunk
-      yield {
-        id: completionId,
-        object: 'chat.completion.chunk',
-        created,
-        model,
-        choices: [
-          {
-            index: 0,
-            delta: {},
-            finish_reason: 'stop',
-          },
-        ],
-      };
-
-      this.logger.debug(`OpenAI streaming chat completion finished`);
+      // Conve
+      return response
     } catch (error) {
       this.logger.error(
         `OpenAI streaming chat completion failed: ${error.message}`

@@ -6,14 +6,11 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createOpenAI } from "@ai-sdk/openai";
-import { generateText, streamText, Tool, ToolSet } from "ai";
+import { AsyncIterableStream, generateText, InferUIMessageChunk, ModelMessage, streamText, Tool, ToolSet, UIMessage } from "ai";
 import { z } from "zod";
 import { RetrievalService } from "../retrieval/retrieval.service";
 
-export interface ChatMessage {
-  role: "system" | "user" | "assistant";
-  content: string;
-}
+export type ChatMessage = ModelMessage
 
 export interface ToolResult {
   status: "success" | "no_results" | "error";
@@ -296,7 +293,7 @@ export class LlmService {
       topP?: number;
       enableToolCalling?: boolean;
     } = {},
-  ): Promise<Response> {
+  ): Promise<AsyncIterableStream<InferUIMessageChunk<UIMessage>>> {
     const {
       temperature = 0.7,
       maxTokens,
@@ -310,10 +307,13 @@ export class LlmService {
       );
 
       const result = streamText({
-        model: this.openai(this.model),
+        model: this.openai.chat(this.model),
         messages,
         temperature,
         maxRetries: 3,
+        onChunk: (chunk) => {
+          this.logger.debug(`Stream chunk: ${JSON.stringify(chunk)}`);
+        },
         ...(maxTokens && { maxTokens }),
         ...(enableToolCalling ? { maxSteps: 5 } : {}), // Enable up to 5 tool calling steps when tool calling is enabled
         tools: enableToolCalling
@@ -322,7 +322,7 @@ export class LlmService {
       });
 
       // Return standard UI Message Stream Response
-      return result.toUIMessageStreamResponse();
+      return  result.toUIMessageStream();
     } catch (error) {
       this.logger.error(`Stream generation failed: ${error.message}`);
       throw new Error(`Stream generation failed: ${error.message}`);

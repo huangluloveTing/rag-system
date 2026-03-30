@@ -15,6 +15,7 @@ const SessionList: React.FC<SessionListProps> = ({
   onCreate,
   onDelete,
 }) => {
+  console.log(sessions)
   return (
     <div
       style={{

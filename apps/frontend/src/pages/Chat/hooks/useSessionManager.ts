@@ -27,7 +27,8 @@ export const useSessionManager = (): UseSessionManagerReturn => {
     setLoading(true);
     try {
       const result = await getSessions(1, 20);
-      setSessions(result.data || result);
+      console.log('Loaded sessions:', result);
+      setSessions((result.data || result).sessions || []);
     } catch (error: any) {
       console.error('Load sessions failed:', error);
       message.error('加载会话列表失败');
