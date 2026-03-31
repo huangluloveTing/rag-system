@@ -84,7 +84,7 @@ export class DocumentController {
     return {
       document_id: result.documentId,
       status: result.status,
-      message: '文档已接收，正在异步处理',
+      message: '文档已接收，正在异步处理!',
     };
   }
 

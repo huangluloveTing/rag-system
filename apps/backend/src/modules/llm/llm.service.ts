@@ -92,6 +92,7 @@ export class LlmService {
 - 简单问候、闲聊
 - 通用常识问题
 - 明确要求不使用知识库的问题
+- 总结归纳后的回答（如“请基于知识库内容总结公司的报销流程”）
 `,
         inputSchema: z.object({
           query: z
