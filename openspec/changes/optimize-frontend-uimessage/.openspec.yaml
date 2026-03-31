@@ -1,0 +1,15 @@
+change: optimize-frontend-uimessage
+status: proposed
+created_at: 2026-03-31
+description: Optimize frontend chat interface to fully leverage Vercel AI SDK's UIMessage model for rich conversation rendering, including complete tool invocation visualization, detailed arguments/results display, conversation metadata, and enhanced message part rendering.
+artifacts:
+  - proposal.md
+  - design.md
+  - tasks.md
+tags:
+  - frontend
+  - chat
+  - uimessage
+  - vercel-ai-sdk
+  - rag
+priority: high

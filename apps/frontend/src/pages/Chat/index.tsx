@@ -2,16 +2,16 @@
  * Chat Page
  * Main chat page with session list and conversation area
  * useChat is managed here to support session switching
+ * Now uses MessageItem components instead of Bubble.List
  */
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useChat } from "@ai-sdk/react";
 import { message } from "antd";
 import SessionList from "./components/SessionList";
-import ThinkingCard from "./components/ThinkingCard";
+import MessageItem from "./components/MessageItem";
 import ChatInput from "./components/ChatInput";
-import { Bubble } from "@ant-design/x";
 import { useSessionManager } from "./hooks/useSessionManager";
-import type { Message, ToolInvocation } from "./types/chat";
+import type { UIMessage } from "ai";
 import { DefaultChatTransport } from "ai";
 
 const ChatPage: React.FC = () => {
@@ -67,39 +67,17 @@ const ChatPage: React.FC = () => {
     await deleteSessionById(sessionId);
   };
 
-  // Convert messages to Bubble.List items
-  const bubbleItems = messages.flatMap((msg: any) => {
-    const items: any[] = [];
-
-    const hasToolInvocations =
-      msg.role === "assistant" &&
-      msg.toolInvocations &&
-      msg.toolInvocations.length > 0;
-
-    if (hasToolInvocations) {
-      items.push({
-        key: `${msg.id}-thinking`,
-        placement: "start",
-        content: (
-          <ThinkingCard
-            toolInvocations={msg.toolInvocations as ToolInvocation[]}
-            isStreaming={
-              status === "streaming" && (!msg.content || msg.content === "")
-            }
-          />
-        ),
-      });
-    }
-
-    items.push({
-      key: msg.id,
-      placement: msg.role === "user" ? "end" : "start",
-      typing: status === "streaming" && msg.role === "assistant",
-      content: msg.content || "",
-    });
-
-    return items;
-  });
+  // Render messages using MessageItem components with stable keys
+  const messageElements = useMemo(() =>
+    messages.map((msg: UIMessage) => (
+      <MessageItem
+        key={msg.id}
+        message={msg}
+        isStreaming={status === "streaming" && messages[messages.length - 1]?.id === msg.id}
+      />
+    )),
+    [messages, status]
+  );
 
   // Display error
   useEffect(() => {
@@ -124,6 +102,8 @@ const ChatPage: React.FC = () => {
   const handleStop = () => {
     stop();
   };
+
+  console.log("Current messages:", messages);
 
   return (
     <div
@@ -165,7 +145,7 @@ const ChatPage: React.FC = () => {
 
         {/* Message List */}
         <div style={{ flex: 1, overflow: "auto", padding: "16px" }}>
-          <Bubble.List items={bubbleItems} />
+          {messageElements}
         </div>
 
         {/* Input */}

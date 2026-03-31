@@ -3,6 +3,8 @@
  * Aligned with backend API and Vercel AI SDK message format
  */
 
+import type { UIMessage } from "ai";
+
 // Session types
 export interface Session {
   id: string;
@@ -20,23 +22,9 @@ export interface SessionDetail {
 }
 
 // Message types (Vercel AI SDK compatible)
-export interface Message {
-  id: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  toolInvocations?: ToolInvocation[];
-  createdAt?: Date;
-}
+export type Message = UIMessage
 
-export interface ToolInvocation {
-  toolName: string;
-  toolCallId: string;
-  args: Record<string, any>;
-  result?: {
-    results?: SearchResult[];
-  };
-  state: 'partial-call' | 'call' | 'result';
-}
+
 
 export interface SearchResult {
   index: number;

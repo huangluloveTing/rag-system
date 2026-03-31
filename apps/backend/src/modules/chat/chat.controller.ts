@@ -49,19 +49,6 @@ export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
   /**
-   * 标准 RAG 聊天接口
-   */
-  // @Post()
-  // @ApiOperation({ summary: '发送消息（非流式）' })
-  // @ApiResponse({ status: 201, description: '返回答案' })
-  // async sendMessage(
-  //   @Body() request: ChatRequest,
-  //   @CurrentUser() user: any
-  // ): Promise<ChatResponse> {
-  //   return this.chatService.chat(request, user.id);
-  // }
-
-  /**
    * 流式聊天（UI Message Stream）
    * POST /api/v1/chat/stream
    */
