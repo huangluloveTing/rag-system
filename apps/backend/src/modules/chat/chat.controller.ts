@@ -26,6 +26,7 @@ import { ChatService, ChatRequest, ChatResponse } from './chat.service';
 import { Observable, from } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { convertToModelMessages } from 'ai';
+import { SessionDto } from './dto/chat.session';
 
 // OpenAI Chat Completion API 类型
 export interface OpenAIChatMessage {
@@ -156,5 +157,13 @@ export class ChatController {
   ) {
     await this.chatService.deleteSession(sessionId, user.id);
     return { message: '会话已删除' };
+  }
+
+  // 新建会话
+  @Post('sessions')
+  @ApiOperation({ summary: '创建新会话' })
+  async createSession(@CurrentUser() user: any, @Body() session: SessionDto) {
+    console.log('Creating session with title:', session.title);
+    return this.chatService.createSession(user.id);
   }
 }

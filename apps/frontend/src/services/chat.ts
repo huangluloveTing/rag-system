@@ -216,7 +216,7 @@ export async function ragChatStream(
  */
 export async function getSessions(page: number = 1, pageSize: number = 20) {
   const token = localStorage.getItem('token');
-  const url = `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/v1/chat/sessions?page=${page}&pageSize=${pageSize}`;
+  const url = `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/v1/chat/sessions?page=${page}&pageSize=${pageSize}`;
 
   const response = await fetch(url, {
     headers: {

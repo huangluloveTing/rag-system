@@ -405,6 +405,21 @@ export class ChatService {
   }
 
   /**
+   * 新建会话
+   */
+  async createSession(userId: string) {
+    const session = await this.prisma.chatSession.create({
+      data: {
+        userId,
+        title: '新会话',
+      },
+    });
+
+    this.logger.log(`Created new session: ${session.id}`);
+    return session;
+  }
+
+  /**
    * OpenAI 兼容的 Chat Completion API（非流式）
    */
   async openAIChatCompletion(
