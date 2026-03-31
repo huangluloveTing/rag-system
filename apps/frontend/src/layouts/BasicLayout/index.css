@@ -2,7 +2,11 @@
  * 基础布局样式
  */
 .basic-layout {
-  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-flow: column;
+  align-items: stretch;
+  max-height: 100vh;
 }
 
 .layout-sider {
@@ -55,8 +59,8 @@
 }
 
 .layout-content {
-  margin: 24px;
-  padding: 24px;
-  min-height: calc(100vh - 112px);
+  margin: 16px;
+  padding: 16px;
+  flex: 1;
   overflow: auto;
 }

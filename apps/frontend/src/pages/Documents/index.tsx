@@ -292,6 +292,7 @@ const DocumentsPage: React.FC = () => {
       title: '文件名',
       dataIndex: 'filename',
       key: 'filename',
+      width: 120,
       render: (v: string, record) => (
         <Space>
           <Button type="link" onClick={() => openDetail(record.id)}>
@@ -307,14 +308,14 @@ const DocumentsPage: React.FC = () => {
       title: '类型',
       dataIndex: 'fileType',
       key: 'fileType',
-      width: 100,
+      width: 80,
       render: (v: string | null | undefined) => v || '-',
     },
     {
       title: '标签',
       dataIndex: 'tags',
       key: 'tags',
-      width: 200,
+      width: 100,
       render: (v: string[] | undefined) =>
         v && v.length > 0 ? (
           <Space size={[0, 4]} wrap>

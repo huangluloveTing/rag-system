@@ -103,13 +103,11 @@ const ChatPage: React.FC = () => {
     stop();
   };
 
-  console.log("Current messages:", messages);
-
   return (
     <div
       style={{
         display: "flex",
-        height: "calc(100vh - 64px)",
+        height: "100%",
         backgroundColor: "#f5f5f5",
       }}
     >

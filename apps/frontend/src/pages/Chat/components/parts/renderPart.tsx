@@ -6,6 +6,7 @@ import React from 'react';
 import TextPart from './TextPart';
 import ReasoningPart from './ReasoningPart';
 import ToolInvocationPart from './ToolInvocationPart';
+import type { Tool, UIMessage, UITool, UIToolInvocation } from 'ai';
 
 // Part types from Vercel AI SDK
 export type MessagePart = {
@@ -26,7 +27,7 @@ export type MessagePart = {
  * Render a message part based on its type
  */
 export function renderMessagePart(
-  part: MessagePart,
+  part: UIMessage["parts"][number],
   isStreaming: boolean,
   index: number
 ): React.ReactElement {
@@ -42,15 +43,6 @@ export function renderMessagePart(
         />
       );
 
-    case 'tool-invocation':
-      return (
-        <ToolInvocationPart
-          key={key}
-          toolInvocation={part.toolInvocation}
-          isStreaming={isStreaming}
-        />
-      );
-
     case 'reasoning':
       return (
         <ReasoningPart
@@ -61,11 +53,17 @@ export function renderMessagePart(
       );
 
     default:
-      // Unknown part type - show as fallback
-      return (
-        <div key={key} style={{ fontSize: '14px' }}>
-          {JSON.stringify(part)}
-        </div>
-      );
+      if (part.type.startsWith('tool-')) {
+        return (
+          <ToolInvocationPart
+            key={key}
+            toolInvocation={part as UIToolInvocation<UITool | Tool>}
+            isStreaming={isStreaming}
+          />
+        );
+      }
+      // For unknown part types, render nothing or a placeholder
+      console.warn(`Unknown message part type: ${part.type}`);
+      return null
   }
 }
