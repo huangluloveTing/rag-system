@@ -109,7 +109,7 @@ export class QdrantService implements OnModuleInit {
       });
 
       return results.map((r) => ({
-        id: r.id as string,
+        id: String(r.id),
         score: r.score,
         payload: r.payload || undefined,
       }));

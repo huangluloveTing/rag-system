@@ -6,7 +6,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createOpenAI } from "@ai-sdk/openai";
-import { AsyncIterableStream, generateText, InferUIMessageChunk, ModelMessage, streamText, Tool, ToolSet, UIMessage } from "ai";
+import { AsyncIterableStream, generateText, InferUIMessageChunk, ModelMessage, stepCountIs, streamText, Tool, ToolSet, UIMessage } from "ai";
 import { z } from "zod";
 import { RetrievalService } from "../retrieval/retrieval.service";
 
@@ -309,9 +309,10 @@ export class LlmService {
 
       const result = streamText({
         model: this.openai.chat(this.model),
-        messages,
+        messages: [{ role: "system", content: "你是一个专业的知识库问答助手。工具调用的回答，需要通过大模型总结后，返回给用户！！！" }, ...messages],
         temperature,
         maxRetries: 3,
+        stopWhen: stepCountIs(5),
         onChunk: (chunk) => {
           this.logger.debug(`Stream chunk: ${JSON.stringify(chunk)}`);
         },
